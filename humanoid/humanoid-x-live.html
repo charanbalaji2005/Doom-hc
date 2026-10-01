@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HUMANOID X</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e4e2dc; --panel:#f1f0ec; --raise:#e6e4de; --line:#cbc8c0; --text:#1d2125; --muted:#5a6268;
+  --accent:#147a57; --accent-ink:#ffffff; --warn:#93600b; --danger:#c3363b; --scene:#d8d6cf; --floor:#c9c6be; --grid:#9a978f;
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16191c; --panel:#1c2024; --raise:#252a2f; --line:#343a40; --text:#ecebe6; --muted:#9aa3a8;
+    --accent:#2fbf8a; --accent-ink:#04241a; --warn:#e0a33a; --danger:#ec5a5e; --scene:#15181b; --floor:#1b1f22; --grid:#3d444a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16191c; --panel:#1c2024; --raise:#252a2f; --line:#343a40; --text:#ecebe6; --muted:#9aa3a8;
+  --accent:#2fbf8a; --accent-ink:#04241a; --warn:#e0a33a; --danger:#ec5a5e; --scene:#15181b; --floor:#1b1f22; --grid:#3d444a;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:flex;flex-direction:column;height:100%}
+.stage{position:relative;flex:0 0 52%;min-height:260px;background:var(--scene);overflow:hidden}
+#gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+.panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--panel);border-top:1px solid var(--line)}
+@media (min-width:900px){
+  .app{flex-direction:row}
+  .stage{flex:1 1 auto;height:100%}
+  .panel{flex:0 0 410px;border-top:0;border-left:1px solid var(--line)}
+}
+.hud{position:absolute;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;pointer-events:none}
+.hud>*{pointer-events:auto}
+.hud-top{top:10px}
+.hud-bottom{bottom:10px;justify-content:flex-end}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wordmark{font-family:"Chakra Petch","IBM Plex Sans",sans-serif;font-weight:700;font-size:15px;letter-spacing:.09em;padding:5px 9px;border:1.5px solid var(--text);border-radius:3px;background:var(--panel)}
+.state{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:500}
+.state i{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.state[data-s="THINKING"] i,.state[data-s="LISTENING"] i{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 25%,transparent)}
+.state[data-s="ERROR"] i,.state[data-s="STOPPED"] i{background:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 25%,transparent)}
+.estop{min-width:74px;height:44px;border-radius:22px;border:2px solid var(--danger);background:var(--danger);color:#fff;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;cursor:pointer}
+.estop[aria-pressed="true"]{background:var(--panel);color:var(--danger)}
+.views{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.views button{border:0;background:transparent;padding:6px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
+.views button[aria-pressed="true"]{background:var(--raise);color:var(--text)}
+.toast{position:absolute;left:50%;top:64px;transform:translateX(-50%);max-width:min(92%,420px);background:var(--text);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
+.toast.show{opacity:1}
+.glerror{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px;flex:0 0 auto}
+.tabs button{flex:1;border:0;background:none;padding:12px 4px 10px;font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:14.5px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+.panes{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.pane{padding:14px 16px 28px}
+.pane[hidden]{display:none}
+h3{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:14px;letter-spacing:.02em;margin:22px 0 8px;color:var(--text)}
+h3:first-child{margin-top:4px}
+p{margin:0 0 10px}
+.note{font-size:13px;color:var(--muted)}
+textarea{width:100%;resize:none;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);line-height:1.4;min-height:62px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--raise);padding:8px 12px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;line-height:1.25}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.small{padding:6px 10px;font-size:13px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.switch input{accent-color:var(--accent);width:18px;height:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;padding:6px 11px;border-radius:999px;font-size:13.5px;cursor:pointer;text-align:left}
+.chip:hover{background:var(--raise)}
+.chip.fail{border-style:dashed}
+.reply{margin-top:12px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--raise);border-radius:0 8px 8px 0;font-size:14.5px}
+.plan{list-style:none;margin:0;padding:0;counter-reset:step}
+.plan li{position:relative;padding:9px 0 9px 32px;border-bottom:1px solid var(--line);counter-increment:step;font-size:14px}
+.plan li::before{content:counter(step);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.plan li.empty{padding-left:0;color:var(--muted);counter-increment:none}
+.plan li.empty::before{display:none}
+.plan .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.plan .what{font-weight:500}
+.plan .args{color:var(--muted);font-size:13px}
+.plan .pill{font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;color:var(--muted)}
+.plan li[data-s="running"] .pill{border-color:var(--accent);color:var(--accent)}
+.plan li[data-s="running"]::before{border-color:var(--accent);color:var(--accent)}
+.plan li[data-s="done"] .pill{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.plan li[data-s="failed"] .pill{background:var(--danger);border-color:var(--danger);color:#fff}
+.plan .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.plan li[data-s="failed"] .sub{color:var(--danger)}
+.validation{font-size:13px;color:var(--muted);margin-top:8px}
+.validation .bad{color:var(--danger)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;background:var(--bg)}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--raise);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+select{padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+.slider{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.slider label{font-size:13.5px}
+.slider output{font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted);text-align:right}
+.slider input{grid-column:1/3;width:100%;accent-color:var(--accent)}
+.slider .own{grid-column:1/3;font-size:12px;color:var(--muted)}
+.slider .own b{font-weight:500;color:var(--text)}
+.stat{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0;font-size:14px}
+.stat dt{color:var(--muted)}
+.stat dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.meter{height:6px;border-radius:3px;background:var(--raise);overflow:hidden;margin:4px 0 12px}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.trackstate{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:17px;margin:2px 0 2px}
+video#cam{width:128px;height:96px;border-radius:8px;border:1px solid var(--line);object-fit:cover;transform:scaleX(-1);background:var(--raise)}
+.log{list-style:none;margin:0;padding:0;font-size:13px}
+.log li{display:grid;grid-template-columns:64px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.log time{color:var(--muted);font-variant-numeric:tabular-nums}
+.log .k{color:var(--accent);font-weight:500;margin-right:4px}
+.log .k.err{color:var(--danger)}
+.toggles{display:flex;flex-direction:column;gap:10px}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}.meter i{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage" id="stage">
+    <canvas id="gl" aria-label="3D view of the HUMANOID X robot. Drag to orbit, pinch or scroll to zoom."></canvas>
+    <div class="hud hud-top">
+      <div class="brand">
+        <span class="wordmark">HUMANOID X</span>
+        <span class="state" id="stateChip" data-s="IDLE" role="status" aria-live="polite"><i></i><b id="stateText">Idle</b></span>
+      </div>
+      <button class="estop" id="estop" aria-pressed="false" title="Emergency stop: freezes all motion">Stop</button>
+    </div>
+    <div class="hud hud-bottom">
+      <div class="views" role="group" aria-label="Camera view">
+        <button data-view="hero" aria-pressed="true">Hero</button>
+        <button data-view="front" aria-pressed="false">Front</button>
+        <button data-view="side" aria-pressed="false">Side</button>
+        <button data-view="face" aria-pressed="false">Face</button>
+        <button data-view="bench" aria-pressed="false">Bench</button>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="glerror" id="glerror" hidden>3D rendering isn't available in this browser. Turn on hardware acceleration or try another browser.</div>
+  </section>
+
+  <section class="panel">
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="command">Command</button>
+      <button role="tab" aria-selected="false" data-tab="body">Body</button>
+      <button role="tab" aria-selected="false" data-tab="tracking">Tracking</button>
+      <button role="tab" aria-selected="false" data-tab="system">System</button>
+    </nav>
+    <div class="panes">
+      <div class="pane" id="pane-command" role="tabpanel">
+        <textarea id="cmdInput" rows="2" placeholder="Tell the robot what to do, for example: look left, then wave" aria-label="Command"></textarea>
+        <div class="row">
+          <button class="btn primary" id="sendBtn">Run command</button>
+          <button class="btn" id="micBtn" hidden>Speak command</button>
+          <label class="switch" style="margin-left:auto"><input type="checkbox" id="aiToggle" disabled> Plan with Claude</label>
+        </div>
+        <p class="note" id="plannerNote" style="margin-top:6px">Checking whether Claude planning is available…</p>
+        <h3>Try</h3>
+        <div class="chips" id="chips"></div>
+        <div class="reply" id="reply" hidden></div>
+        <h3>Plan</h3>
+        <ol class="plan" id="plan"><li class="empty">No plan yet. Run a command or tap a suggestion.</li></ol>
+        <p class="validation" id="validation"></p>
+        <div class="row"><button class="btn small" id="resetBench">Reset bench</button><button class="btn small" id="resetPose">Return to rest pose</button></div>
+        <p class="note" style="margin-top:12px">Grasping is kinematic: the hand must get within 3.5 cm of an object before it attaches, and released objects fall with simple gravity. There is no contact physics.</p>
+      </div>
+
+      <div class="pane" id="pane-body" role="tabpanel" hidden>
+        <h3>Gestures</h3>
+        <div class="row" style="margin-top:0;margin-bottom:8px">
+          <span class="note">Arm</span>
+          <div class="seg" id="gestureSide"><button data-v="left" aria-pressed="false">Left</button><button data-v="right" aria-pressed="true">Right</button></div>
+        </div>
+        <div class="grid" id="gestures"></div>
+        <h3>Hands</h3>
+        <div class="row" style="margin-top:0;margin-bottom:8px">
+          <div class="seg" id="handSide"><button data-v="left" aria-pressed="false">Left</button><button data-v="right" aria-pressed="false">Right</button><button data-v="both" aria-pressed="true">Both</button></div>
+        </div>
+        <div class="grid" id="hands"></div>
+        <h3>Expressions</h3>
+        <div class="grid" id="exprs"></div>
+        <h3>Joints</h3>
+        <p class="note">Moving a slider takes manual control of that joint. Limits and speed caps still apply.</p>
+        <div class="row" style="margin-top:0"><select id="jointGroup" aria-label="Joint group"></select><button class="btn small" id="releaseManual">Release manual control</button></div>
+        <div id="sliders"></div>
+      </div>
+
+      <div class="pane" id="pane-tracking" role="tabpanel" hidden>
+        <h3>Follow</h3>
+        <div class="seg" id="trackMode"><button data-v="off" aria-pressed="true">Off</button><button data-v="pointer" aria-pressed="false">Pointer</button><button data-v="camera" aria-pressed="false">Camera</button></div>
+        <p class="note" style="margin-top:8px">Pointer makes the robot look wherever you hover or touch the 3D view. Camera follows the largest skin-toned, moving area in your webcam. It is not a face-recognition model.</p>
+        <h3>Status</h3>
+        <div class="trackstate" id="trackState">Off</div>
+        <p class="note" id="trackMsg"></p>
+        <div class="note">Confidence</div>
+        <div class="meter"><i id="confBar"></i></div>
+        <dl class="stat">
+          <dt>Target direction</dt><dd id="tTarget">–</dd>
+          <dt>Neck and head</dt><dd id="tHead">–</dd>
+          <dt>Eyes</dt><dd id="tEyes">–</dd>
+        </dl>
+        <div class="row"><video id="cam" playsinline muted hidden></video></div>
+        <h3>Settings</h3>
+        <div class="slider"><label for="sens">Sensitivity</label><output id="sensOut">1.0×</output><input type="range" id="sens" min="0.4" max="2" step="0.1" value="1"></div>
+        <div class="slider"><label for="smooth">Smoothing</label><output id="smoothOut">0.60</output><input type="range" id="smooth" min="0.05" max="0.95" step="0.05" value="0.6"></div>
+        <div class="slider"><label for="maxYaw">Maximum head turn</label><output id="maxYawOut">70°</output><input type="range" id="maxYaw" min="20" max="90" step="5" value="70"></div>
+        <div class="row"><button class="btn" id="recenter">Recenter head</button></div>
+      </div>
+
+      <div class="pane" id="pane-system" role="tabpanel" hidden>
+        <h3>Telemetry</h3>
+        <dl class="stat" id="telemetry"></dl>
+        <h3>Display</h3>
+        <div class="toggles">
+          <label class="switch"><input type="checkbox" id="optSkel"> Show joint skeleton</label>
+          <label class="switch"><input type="checkbox" id="optShadows" checked> Shadows</label>
+          <label class="switch"><input type="checkbox" id="optSaver"> Battery saver (lower resolution)</label>
+          <label class="switch"><input type="checkbox" id="optVoice" checked> Spoken replies</label>
+        </div>
+        <h3>How motion is resolved</h3>
+        <p class="note">Every frame, each joint takes its value from the highest active layer: rest pose and breathing, then animation clips, commanded actions, gaze (commands, then tracking), facial expression and blinks, speech, and finally manual sliders. A safety layer then clamps every joint to its limit and caps its speed. Commands from Claude or the local parser pass through a validator first; unknown actions are rejected and out-of-range values are clamped.</p>
+        <h3>Event log</h3>
+        <ul class="log" id="log"></ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cm = m => `${Math.round(m * 100)} cm`;
+let activeTab = 'command';
+
+/* ---------------- event log ---------------- */
+const LOG = [];
+function logEvent(kind, msg, err) {
+  const d = new Date();
+  LOG.unshift({ t: d.toTimeString().slice(0, 8), kind, msg, err: !!err });
+  if (LOG.length > 120) LOG.pop();
+  if (activeTab === 'system') renderLog();
+}
+function renderLog() {
+  const ul = $('#log'); ul.textContent = '';
+  for (const e of LOG.slice(0, 60)) {
+    const li = document.createElement('li');
+    const tm = document.createElement('time'); tm.textContent = e.t;
+    const div = document.createElement('div');
+    const k = document.createElement('span'); k.className = 'k' + (e.err ? ' err' : ''); k.textContent = e.kind;
+    div.append(k, document.createTextNode(e.msg));
+    li.append(tm, div); ul.append(li);
+  }
+}
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------------- renderer ---------------- */
+if (!window.THREE) { $('#glerror').hidden = false; $('#glerror').textContent = 'The 3D library failed to load. Check your connection and reload.'; return; }
+const stageEl = $('#stage'), canvas = $('#gl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (e) { $('#glerror').hidden = false; return; }
+let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(pixelRatio);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x15181b, 7, 16);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+const C = h => new THREE.Color(h).convertSRGBToLinear();
+
+(function buildEnvironment() {
+  const env = new THREE.Scene();
+  const room = new THREE.Mesh(new THREE.BoxGeometry(14, 7, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x30353a), side: THREE.BackSide }));
+  room.position.y = 3.5; env.add(room);
+  const panel = (w, h, x, y, z, rx, ry, color, k) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
+    m.position.set(x, y, z); m.rotation.set(rx, ry, 0); env.add(m);
+  };
+  panel(6, 3, 0, 6.8, 0, Math.PI / 2, 0, 0xffffff, 3.2);
+  panel(3, 4, 6.8, 3, 1, 0, -Math.PI / 2, 0xfff1dc, 1.6);
+  panel(3, 4, -6.8, 3, -1, 0, Math.PI / 2, 0xd8fff0, 1.1);
+  panel(5, 2.5, 0, 3, 6.8, 0, Math.PI, 0xffffff, 1.4);
+  panel(14, 1, 0, 0.2, 0, -Math.PI / 2, 0, 0x101214, 1);
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(env, 0.04).texture;
+  pm.dispose();
+})();
+
+scene.add(new THREE.HemisphereLight(0xdfe7ec, 0x1a1d20, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 2.0);
+key.position.set(2.4, 4.6, 3.4); key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+Object.assign(key.shadow.camera, { left: -1.3, right: 1.3, top: 2.2, bottom: -0.4, near: 0.5, far: 12 });
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+key.target.position.set(0, 0.9, 0.2);
+scene.add(key, key.target);
+const rim = new THREE.DirectionalLight(0x9fe8cc, 1.1); rim.position.set(-3, 2.6, -3); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe2b8, 0.45); fill.position.set(-3, 1.4, 2.2); scene.add(fill);
+
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x1b1f22, roughness: 0.86, metalness: 0.08 });
+const floor = new THREE.Mesh(new THREE.CircleGeometry(9, 72), floorMat);
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+let grid = null;
+function buildGrid(color) {
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); }
+  grid = new THREE.GridHelper(12, 48, color, color);
+  grid.material.transparent = true; grid.material.opacity = 0.35; grid.position.y = 0.001; scene.add(grid);
+}
+function applyTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const bg = cs.getPropertyValue('--scene').trim() || '#15181b';
+  scene.background = new THREE.Color(bg);
+  scene.fog.color = C(bg);
+  floorMat.color = C(cs.getPropertyValue('--floor').trim() || '#1b1f22');
+  buildGrid(new THREE.Color(cs.getPropertyValue('--grid').trim() || '#3d444a'));
+}
+applyTheme();
+const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+if (mqDark.addEventListener) mqDark.addEventListener('change', applyTheme);
+
+/* ---------------- materials & geometry helpers ---------------- */
+const MAT = {
+  ceramic: new THREE.MeshPhysicalMaterial({ color: C(0xe9e7e1), roughness: 0.34, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.22 }),
+  titanium: new THREE.MeshStandardMaterial({ color: C(0xaab2b7), metalness: 0.95, roughness: 0.32 }),
+  gunmetal: new THREE.MeshStandardMaterial({ color: C(0x464c52), metalness: 0.85, roughness: 0.42 }),
+  graphite: new THREE.MeshStandardMaterial({ color: C(0x25292d), metalness: 0.35, roughness: 0.55 }),
+  rubber: new THREE.MeshStandardMaterial({ color: C(0x151719), metalness: 0, roughness: 0.92 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: C(0x07090b), metalness: 0.2, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03 }),
+  lid: new THREE.MeshStandardMaterial({ color: C(0x2b3034), metalness: 0.5, roughness: 0.45, side: THREE.DoubleSide }),
+  glow: new THREE.MeshStandardMaterial({ color: C(0x0d2a20), emissive: C(0x2fbf8a), emissiveIntensity: 1.8, roughness: 0.4 }),
+  lens: new THREE.MeshStandardMaterial({ color: C(0x0a0d10), emissive: C(0x113a2c), emissiveIntensity: 1, roughness: 0.15, metalness: 0.4 })
+};
+const eyeMat = new THREE.MeshStandardMaterial({ color: C(0x0d2a20), emissive: C(0x2fbf8a), emissiveIntensity: 0, roughness: 0.35, side: THREE.DoubleSide });
+const coreMat = new THREE.MeshStandardMaterial({ color: C(0x0d2a20), emissive: C(0x2fbf8a), emissiveIntensity: 0, roughness: 0.4 });
+const mouthMat = new THREE.MeshStandardMaterial({ color: C(0x0d2a20), emissive: C(0x2fbf8a), emissiveIntensity: 0.4, roughness: 0.4 });
+
+function rrShape(w, h, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  r = Math.max(0.0001, Math.min(r, w / 2 - 0.0001, h / 2 - 0.0001));
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+const GEO = new Map();
+function rbox(w, h, d, r = 0.01) {
+  const k = `rb${w},${h},${d},${r}`;
+  if (GEO.has(k)) return GEO.get(k);
+  r = Math.min(r, w / 2 - 0.0005, h / 2 - 0.0005, d / 2 - 0.0005);
+  const depth = Math.max(0.0005, d - 2 * r);
+  const g = new THREE.ExtrudeGeometry(rrShape(Math.max(0.0006, w - 2 * r), Math.max(0.0006, h - 2 * r), r * 0.9), { depth, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelSegments: 4, curveSegments: 5, steps: 1 });
+  g.translate(0, 0, -depth / 2);
+  GEO.set(k, g); return g;
+}
+const cyl = (rt, rb, h, s = 24) => new THREE.CylinderGeometry(rt, rb, h, s);
+const sph = (r, w = 24, h = 16) => new THREE.SphereGeometry(r, w, h);
+const lathe = (pts, seg = 32) => new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg);
+const nodes = {};
+function J(name, parent, x, y, z, order) {
+  const g = new THREE.Group(); g.name = name; g.position.set(x, y, z);
+  if (order) g.rotation.order = order;
+  parent.add(g); nodes[name] = g; return g;
+}
+function M(geo, mat, parent, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.scale.set(sx, sy, sz);
+  m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+const PI = Math.PI;
+
+/* ---------------- robot build ---------------- */
+const robot = new THREE.Group(); robot.name = 'HUMANOID_X'; scene.add(robot);
+const BROW_Y = 0.128;
+(function buildRobot() {
+  const pelvis = J('pelvis', robot, 0, 1.0, 0);
+  M(rbox(0.25, 0.11, 0.17, 0.035), MAT.gunmetal, pelvis, 0, -0.01, 0);
+  M(rbox(0.19, 0.085, 0.03, 0.012), MAT.ceramic, pelvis, 0, -0.012, 0.085);
+  M(rbox(0.2, 0.07, 0.03, 0.012), MAT.ceramic, pelvis, 0, -0.005, -0.085);
+  for (const s of [1, -1]) {
+    M(cyl(0.052, 0.052, 0.06), MAT.gunmetal, pelvis, 0.1 * s, -0.075, 0, 0, 0, PI / 2);
+    M(cyl(0.03, 0.03, 0.01), MAT.titanium, pelvis, 0.133 * s, -0.075, 0, 0, 0, PI / 2);
+  }
+  const spine = J('spine', pelvis, 0, 0.06, 0);
+  [0.015, 0.055, 0.095].forEach((y, i) => {
+    M(cyl(0.085 - i * 0.003, 0.09 - i * 0.003, 0.03, 28), MAT.gunmetal, spine, 0, y, 0, 0, 0, 0, 1, 1, 0.72);
+    if (i < 2) M(cyl(0.074, 0.074, 0.012, 28), MAT.titanium, spine, 0, y + 0.021, 0, 0, 0, 0, 1, 1, 0.72);
+  });
+  M(rbox(0.09, 0.1, 0.02, 0.008), MAT.ceramic, spine, 0, 0.06, 0.06);
+  M(cyl(0.018, 0.018, 0.13, 12), MAT.titanium, spine, 0, 0.07, -0.058);
+
+  const chest = J('chest', spine, 0, 0.15, 0);
+  M(lathe([[0, -0.045], [0.1, -0.045], [0.135, -0.005], [0.162, 0.08], [0.172, 0.17], [0.162, 0.24], [0.125, 0.29], [0.065, 0.315], [0, 0.32]], 44), MAT.ceramic, chest, 0, 0, 0, 0, 0, 0, 1, 1, 0.68);
+  M(rbox(0.11, 0.024, 0.02, 0.008), MAT.glass, chest, 0, 0.235, 0.102);
+  [-0.035, 0, 0.035].forEach(x => M(cyl(0.0065, 0.0065, 0.006, 16), x === 0 ? MAT.glow : MAT.lens, chest, x, 0.235, 0.113, PI / 2, 0, 0));
+  M(new THREE.TorusGeometry(0.026, 0.0055, 12, 40), coreMat, chest, 0, 0.13, 0.116);
+  M(cyl(0.021, 0.021, 0.006, 32), MAT.glass, chest, 0, 0.13, 0.113, PI / 2, 0, 0);
+  M(cyl(0.06, 0.075, 0.03, 28), MAT.gunmetal, chest, 0, 0.305, 0, 0, 0, 0, 1, 1, 0.8);
+  for (const s of [1, -1]) {
+    M(rbox(0.09, 0.05, 0.11, 0.02), MAT.gunmetal, chest, 0.155 * s, 0.265, 0);
+    M(rbox(0.004, 0.12, 0.004, 0.0015), MAT.glow, chest, 0.082 * s, 0.15, -0.141);
+  }
+  M(rbox(0.2, 0.2, 0.06, 0.02), MAT.graphite, chest, 0, 0.15, -0.11);
+  for (let i = 0; i < 4; i++) M(rbox(0.12, 0.008, 0.01, 0.003), MAT.titanium, chest, 0, 0.095 + i * 0.03, -0.141);
+
+  const neck = J('neck', chest, 0, 0.318, 0, 'YXZ');
+  M(cyl(0.032, 0.036, 0.085, 20), MAT.gunmetal, neck, 0, 0.04, 0);
+  M(cyl(0.039, 0.039, 0.008, 24), MAT.titanium, neck, 0, 0.015, 0);
+  M(cyl(0.037, 0.037, 0.008, 24), MAT.titanium, neck, 0, 0.062, 0);
+  for (const s of [1, -1]) M(cyl(0.007, 0.007, 0.07, 8), MAT.titanium, neck, 0.026 * s, 0.04, -0.022);
+
+  const head = J('head', neck, 0, 0.085, 0, 'YXZ');
+  M(sph(0.1, 44, 30), MAT.ceramic, head, 0, 0.085, -0.008, 0, 0, 0, 0.98, 1.1, 1.06);
+  M(new THREE.SphereGeometry(0.1, 48, 24, PI / 2 - 0.95, 1.9, 1.15, 1.05), MAT.glass, head, 0, 0.085, -0.006, 0, 0, 0, 1.0, 1.12, 1.09);
+  M(rbox(0.012, 0.03, 0.08, 0.005), MAT.titanium, head, 0, 0.196, -0.035);
+  for (const [S, s] of [['L', 1], ['R', -1]]) {
+    const eye = J(`eye_${S}`, head, 0.036 * s, 0.098, 0.097, 'YXZ');
+    M(new THREE.TorusGeometry(0.0185, 0.0035, 10, 36), MAT.titanium, eye, 0, 0, 0.004);
+    M(sph(0.016, 24, 16), MAT.glass, eye, 0, 0, 0, 0, 0, 0, 1, 1, 0.55);
+    const iris = J(`iris_${S}`, eye, 0, 0, 0.0095);
+    iris.add(new THREE.Mesh(new THREE.RingGeometry(0.0062, 0.0118, 36), eyeMat));
+    const lid = J(`lid_${S}`, head, 0.036 * s, 0.098, 0.097);
+    lid.add(new THREE.Mesh(new THREE.SphereGeometry(0.0238, 28, 10, 0, PI * 2, 0, PI / 2), MAT.lid));
+    const brow = J(`brow_${S}`, head, 0.038 * s, BROW_Y, 0.097);
+    M(rbox(0.032, 0.0055, 0.008, 0.0025), MAT.titanium, brow);
+    M(cyl(0.03, 0.03, 0.026, 28), MAT.gunmetal, head, 0.097 * s, 0.088, -0.01, 0, 0, PI / 2);
+    M(new THREE.TorusGeometry(0.022, 0.003, 10, 32), MAT.glow, head, 0.111 * s, 0.088, -0.01, 0, PI / 2, 0);
+    M(cyl(0.018, 0.018, 0.006, 24), MAT.titanium, head, 0.111 * s, 0.088, -0.01, 0, 0, PI / 2);
+  }
+  const mouth = J('mouth', head, 0, 0.04, 0.095);
+  M(rbox(0.036, 0.0035, 0.003, 0.0012), mouthMat, mouth);
+  const jaw = J('jaw', head, 0, 0.05, 0.02);
+  M(rbox(0.075, 0.022, 0.04, 0.009), MAT.ceramic, jaw, 0, -0.038, 0.05);
+
+  function buildArm(S, s) {
+    const sh = J(`shoulder_${S}`, chest, 0.205 * s, 0.265, 0, 'XZY');
+    M(sph(0.05), MAT.titanium, sh);
+    M(new THREE.SphereGeometry(0.066, 28, 14, 0, PI * 2, 0, 1.25), MAT.ceramic, sh, 0.008 * s, 0.008, 0, 0, 0, -0.25 * s);
+    M(cyl(0.031, 0.031, 0.22, 20), MAT.gunmetal, sh, 0, -0.14, 0);
+    M(lathe([[0, -0.255], [0.034, -0.25], [0.043, -0.21], [0.048, -0.14], [0.046, -0.08], [0.04, -0.05], [0, -0.045]]), MAT.ceramic, sh, 0, 0, 0, 0, 0, 0, 1, 1, 0.92);
+    const el = J(`elbow_${S}`, sh, 0, -0.28, 0);
+    M(cyl(0.032, 0.032, 0.072), MAT.gunmetal, el, 0, 0, 0, 0, 0, PI / 2);
+    M(cyl(0.022, 0.022, 0.078, 20), MAT.titanium, el, 0, 0, 0, 0, 0, PI / 2);
+    M(cyl(0.027, 0.023, 0.2, 20), MAT.graphite, el, 0, -0.125, 0);
+    M(lathe([[0, -0.235], [0.03, -0.23], [0.036, -0.2], [0.044, -0.12], [0.042, -0.06], [0.034, -0.035], [0, -0.03]]), MAT.ceramic, el, 0, 0, 0.003, 0, 0, 0, 1, 1, 0.95);
+    M(rbox(0.006, 0.07, 0.004, 0.0015), MAT.glow, el, 0, -0.12, 0.045);
+    const wr = J(`wrist_${S}`, el, 0, -0.25, 0, 'YXZ');
+    M(cyl(0.025, 0.025, 0.022, 20), MAT.titanium, wr);
+    M(rbox(0.032, 0.082, 0.074, 0.012), MAT.graphite, wr, 0, -0.052, 0);
+    M(rbox(0.009, 0.068, 0.066, 0.004), MAT.ceramic, wr, 0.017 * s, -0.05, 0);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.009, 24), MAT.glow);
+    disc.position.set(-0.0165 * s, -0.052, 0); disc.rotation.y = -PI / 2 * s; wr.add(disc);
+    const gp = new THREE.Object3D(); gp.position.set(-0.045 * s, -0.1, 0.004); wr.add(gp); nodes[`grip_${S}`] = gp;
+    const fz = [0.026, 0.009, -0.008, -0.025], fl = [1, 1.08, 1.0, 0.82];
+    for (let i = 0; i < 4; i++) {
+      const L = [0.026, 0.021, 0.017].map(v => v * fl[i]);
+      let parent = wr;
+      for (let k = 0; k < 3; k++) {
+        const n = J(`f_${S}_${i}_${k}`, parent, 0, k === 0 ? -0.093 : -L[k - 1], k === 0 ? fz[i] : 0);
+        M(cyl(0.0075, 0.0075, 0.016, 12), MAT.titanium, n, 0, 0, 0, PI / 2, 0, 0);
+        M(rbox(0.016, L[k] * 0.92, 0.0155, 0.0045), MAT.graphite, n, 0, -L[k] / 2, 0);
+        if (k === 2) M(rbox(0.006, L[k] * 0.6, 0.012, 0.002), MAT.rubber, n, -0.008 * s, -L[k] * 0.55, 0);
+        parent = n;
+      }
+    }
+    const tm = new THREE.Group(); tm.position.set(-0.006 * s, -0.03, 0.036); tm.rotation.set(-0.75, 0, -0.35 * s); wr.add(tm);
+    const TL = [0.024, 0.02, 0.018];
+    let parent = tm;
+    for (let k = 0; k < 3; k++) {
+      const n = J(`th_${S}_${k}`, parent, 0, k === 0 ? 0 : -TL[k - 1], 0);
+      M(cyl(0.008, 0.008, 0.017, 12), MAT.titanium, n, 0, 0, 0, PI / 2, 0, 0);
+      M(rbox(0.017, TL[k] * 0.92, 0.016, 0.0045), MAT.graphite, n, 0, -TL[k] / 2, 0);
+      parent = n;
+    }
+  }
+  function buildLeg(S, s) {
+    const hip = J(`hip_${S}`, pelvis, 0.1 * s, -0.075, 0, 'XZY');
+    M(sph(0.05), MAT.gunmetal, hip);
+    M(lathe([[0, -0.385], [0.048, -0.38], [0.057, -0.31], [0.068, -0.17], [0.07, -0.09], [0.058, -0.04], [0, -0.03]]), MAT.ceramic, hip, 0, 0, 0, 0, 0, 0, 1, 1, 0.95);
+    M(cyl(0.02, 0.02, 0.26, 12), MAT.titanium, hip, 0, -0.21, -0.064);
+    M(rbox(0.004, 0.1, 0.006, 0.0015), MAT.glow, hip, 0.0695 * s, -0.18, 0);
+    const kn = J(`knee_${S}`, hip, 0, -0.4, 0);
+    M(cyl(0.044, 0.044, 0.088), MAT.gunmetal, kn, 0, 0, 0, 0, 0, PI / 2);
+    M(cyl(0.03, 0.03, 0.094, 20), MAT.titanium, kn, 0, 0, 0, 0, 0, PI / 2);
+    M(rbox(0.06, 0.065, 0.03, 0.012), MAT.ceramic, kn, 0, -0.005, 0.045);
+    M(cyl(0.038, 0.03, 0.3, 20), MAT.graphite, kn, 0, -0.2, -0.012);
+    M(lathe([[0, -0.405], [0.038, -0.4], [0.046, -0.33], [0.057, -0.17], [0.055, -0.09], [0.047, -0.04], [0, -0.035]]), MAT.ceramic, kn, 0, 0, 0.008);
+    const an = J(`ankle_${S}`, kn, 0, -0.42, 0, 'XZY');
+    M(cyl(0.03, 0.03, 0.07, 20), MAT.gunmetal, an, 0, 0, 0, 0, 0, PI / 2);
+    M(rbox(0.1, 0.05, 0.18, 0.02), MAT.graphite, an, 0, -0.068, 0.03);
+    M(rbox(0.086, 0.022, 0.12, 0.008), MAT.ceramic, an, 0, -0.04, 0.035);
+    M(rbox(0.104, 0.012, 0.185, 0.005), MAT.rubber, an, 0, -0.094, 0.03);
+    const toe = J(`toe_${S}`, an, 0, -0.08, 0.12);
+    M(rbox(0.098, 0.032, 0.06, 0.012), MAT.graphite, toe, 0, 0, 0.03);
+    M(rbox(0.1, 0.01, 0.062, 0.004), MAT.rubber, toe, 0, -0.0145, 0.03);
+  }
+  buildArm('L', 1); buildArm('R', -1); buildLeg('L', 1); buildLeg('R', -1);
+})();
+
+/* ---------------- bench & objects ---------------- */
+const BENCH_Y = 1.04, BENCH = { x0: -0.4, x1: 0.4, z0: 0.19, z1: 0.87 };
+(function buildBench() {
+  const top = new THREE.MeshStandardMaterial({ color: C(0x2b3035), roughness: 0.5, metalness: 0.4 });
+  M(rbox(0.8, 0.04, 0.68, 0.01), top, scene, 0, BENCH_Y - 0.02, 0.53);
+  M(rbox(0.81, 0.012, 0.012, 0.004), MAT.titanium, scene, 0, BENCH_Y - 0.02, 0.19);
+  for (const x of [-0.37, 0.37]) for (const z of [0.23, 0.83]) M(cyl(0.016, 0.016, BENCH_Y - 0.04), MAT.titanium, scene, x, (BENCH_Y - 0.04) / 2, z);
+  M(cyl(0.01, 0.01, 0.74), MAT.titanium, scene, 0, 0.25, 0.83, 0, 0, PI / 2);
+})();
+const PADS = {
+  green_pad: { label: 'green pad', pos: new THREE.Vector3(0.0, BENCH_Y, 0.33), color: 0x2fbf8a },
+  amber_pad: { label: 'amber pad', pos: new THREE.Vector3(0.25, BENCH_Y, 0.31), color: 0xe0a33a }
+};
+for (const p of Object.values(PADS)) {
+  const m = new THREE.MeshStandardMaterial({ color: C(p.color).multiplyScalar(0.35), emissive: C(p.color), emissiveIntensity: 0.35, roughness: 0.6 });
+  M(cyl(0.048, 0.048, 0.003, 40), m, scene, p.pos.x, BENCH_Y + 0.0015, p.pos.z);
+  M(new THREE.TorusGeometry(0.048, 0.002, 8, 48), MAT.titanium, scene, p.pos.x, BENCH_Y + 0.003, p.pos.z, PI / 2, 0, 0);
+}
+const OBJ = {
+  red_cube: { label: 'red cube', half: 0.03, home: [-0.13, 0.30], geo: rbox(0.06, 0.06, 0.06, 0.008), color: 0xd8423b },
+  blue_cylinder: { label: 'blue cylinder', half: 0.0375, home: [0.13, 0.31], geo: cyl(0.028, 0.028, 0.075, 32), color: 0x3b7dd8 },
+  far_sphere: { label: 'far sphere', half: 0.035, home: [0.0, 0.85], geo: sph(0.035, 32, 20), color: 0xbdb6a8 }
+};
+for (const [name, o] of Object.entries(OBJ)) {
+  o.mesh = M(o.geo, new THREE.MeshPhysicalMaterial({ color: C(o.color), roughness: 0.42, clearcoat: 0.4, clearcoatRoughness: 0.3 }), scene);
+  o.mesh.name = name; o.held = null; o.vel = 0; o.resting = true;
+}
+const held = { L: null, R: null };
+function attach(S, name) { const o = OBJ[name]; nodes[`grip_${S}`].attach(o.mesh); o.held = S; held[S] = name; o.resting = false; }
+function detach(S) {
+  const name = held[S]; if (!name) return; const o = OBJ[name];
+  scene.attach(o.mesh); o.held = null; held[S] = null; o.vel = 0; o.resting = false;
+}
+function resetBench() {
+  for (const S of ['L', 'R']) if (held[S]) detach(S);
+  for (const o of Object.values(OBJ)) {
+    scene.attach(o.mesh); o.held = null; o.vel = 0; o.resting = true;
+    o.mesh.position.set(o.home[0], BENCH_Y + o.half, o.home[1]); o.mesh.rotation.set(0, 0, 0);
+  }
+  logEvent('scene', 'Bench objects reset');
+}
+function supportAt(x, z) {
+  let y = 0;
+  if (x > BENCH.x0 && x < BENCH.x1 && z > BENCH.z0 && z < BENCH.z1) y = BENCH_Y;
+  for (const p of Object.values(PADS)) if (Math.hypot(x - p.pos.x, z - p.pos.z) < 0.048) y = Math.max(y, BENCH_Y + 0.003);
+  return y;
+}
+function updatePhysics(dt) {
+  for (const o of Object.values(OBJ)) {
+    if (o.held || o.resting) continue;
+    o.vel -= 9.81 * dt;
+    const p = o.mesh.position; p.y += o.vel * dt;
+    const sup = supportAt(p.x, p.z);
+    if (p.y - o.half <= sup) {
+      p.y = sup + o.half; o.vel = 0; o.resting = true;
+      const e = new THREE.Euler().setFromQuaternion(o.mesh.quaternion, 'YXZ');
+      o.mesh.rotation.set(0, e.y, 0);
+    }
+  }
+}
+resetBench();
+
+/* ---------------- joint definitions ---------------- */
+const JD = {}, JLIST = [];
+function defJ(id, group, label, min, max, vel, targets, opt = {}) {
+  const j = { id, group, label, min, max, vel, targets, k: opt.k || 9, unit: opt.unit || '°' };
+  JD[id] = j; JLIST.push(j);
+}
+const R = D2R;
+defJ('pelvis_h', 'Torso', 'Pelvis height', -8, 4, 30, [['pelvis', 'py', 0.01, 1.0]], { unit: 'cm', k: 8 });
+defJ('spine_yaw', 'Torso', 'Waist turn', -40, 40, 90, [['spine', 'y', R]]);
+defJ('spine_pitch', 'Torso', 'Waist lean', -10, 25, 60, [['spine', 'x', R]]);
+defJ('spine_roll', 'Torso', 'Waist side bend', -15, 15, 60, [['spine', 'z', -R]]);
+defJ('neck_yaw', 'Head', 'Neck turn', -70, 70, 240, [['neck', 'y', R]], { k: 10 });
+defJ('neck_pitch', 'Head', 'Neck tilt', -30, 30, 180, [['neck', 'x', -R]]);
+defJ('head_yaw', 'Head', 'Head turn', -20, 20, 240, [['head', 'y', R]], { k: 10 });
+defJ('head_pitch', 'Head', 'Head tilt', -25, 25, 200, [['head', 'x', -R]]);
+defJ('head_roll', 'Head', 'Head roll', -20, 20, 120, [['head', 'z', -R]]);
+defJ('eye_yaw', 'Face', 'Eyes left and right', -25, 25, 900, [['eye_L', 'y', R], ['eye_R', 'y', R]], { k: 30 });
+defJ('eye_pitch', 'Face', 'Eyes up and down', -20, 20, 900, [['eye_L', 'x', -R], ['eye_R', 'x', -R]], { k: 30 });
+defJ('lids', 'Face', 'Eyelids closed', 0, 100, 1800, [['lid_L', 'x', 2.95 / 100, -1.45], ['lid_R', 'x', 2.95 / 100, -1.45]], { k: 40, unit: '%' });
+defJ('jaw', 'Face', 'Jaw', 0, 18, 300, [['jaw', 'x', R]], { k: 25 });
+defJ('brow_raise', 'Face', 'Brow raise', -3, 6, 60, [['brow_L', 'py', 0.001, BROW_Y], ['brow_R', 'py', 0.001, BROW_Y]], { unit: 'mm', k: 15 });
+defJ('brow_tilt', 'Face', 'Brow tilt', -20, 20, 200, [['brow_L', 'z', R], ['brow_R', 'z', -R]], { k: 15 });
+for (const [S, s, side] of [['L', 1, 'Left'], ['R', -1, 'Right']]) {
+  const g = `${side} arm`, h = `${side} hand`, l = `${side} leg`;
+  defJ(`shoulder_pitch_${S}`, g, 'Shoulder raise forward', -60, 180, 150, [[`shoulder_${S}`, 'x', -R]]);
+  defJ(`shoulder_roll_${S}`, g, 'Shoulder raise sideways', -10, 170, 150, [[`shoulder_${S}`, 'z', s * R]]);
+  defJ(`shoulder_yaw_${S}`, g, 'Upper arm twist', -80, 95, 180, [[`shoulder_${S}`, 'y', s * R]]);
+  defJ(`elbow_${S}`, g, 'Elbow bend', 0, 145, 220, [[`elbow_${S}`, 'x', -R]]);
+  defJ(`wrist_roll_${S}`, g, 'Forearm twist', -90, 90, 240, [[`wrist_${S}`, 'y', s * R]]);
+  defJ(`wrist_pitch_${S}`, g, 'Wrist bend', -60, 60, 240, [[`wrist_${S}`, 'x', -R]]);
+  defJ(`wrist_yaw_${S}`, g, 'Wrist side bend', -25, 25, 240, [[`wrist_${S}`, 'z', s * R]]);
+  ['index', 'middle', 'ring', 'pinky'].forEach((f, i) => {
+    defJ(`${f}_${S}`, h, `${f[0].toUpperCase() + f.slice(1)} finger curl`, 0, 95, 500,
+      [[`f_${S}_${i}_0`, 'z', -s * R], [`f_${S}_${i}_1`, 'z', -s * R * 1.1], [`f_${S}_${i}_2`, 'z', -s * R * 0.8]], { k: 14 });
+  });
+  defJ(`thumb_${S}`, h, 'Thumb curl', 0, 70, 400, [[`th_${S}_0`, 'z', -s * R * 0.6], [`th_${S}_1`, 'z', -s * R], [`th_${S}_2`, 'z', -s * R * 0.9]], { k: 14 });
+  defJ(`hip_pitch_${S}`, l, 'Hip raise forward', -30, 100, 120, [[`hip_${S}`, 'x', -R]]);
+  defJ(`hip_roll_${S}`, l, 'Hip raise sideways', -15, 35, 90, [[`hip_${S}`, 'z', s * R]]);
+  defJ(`hip_yaw_${S}`, l, 'Hip twist', -30, 30, 90, [[`hip_${S}`, 'y', s * R]]);
+  defJ(`knee_${S}`, l, 'Knee bend', 0, 130, 200, [[`knee_${S}`, 'x', R]]);
+  defJ(`ankle_pitch_${S}`, l, 'Ankle toes up', -35, 30, 150, [[`ankle_${S}`, 'x', -R]]);
+  defJ(`ankle_roll_${S}`, l, 'Ankle roll', -20, 20, 90, [[`ankle_${S}`, 'z', s * R]]);
+  defJ(`toe_${S}`, l, 'Toe bend', -10, 40, 150, [[`toe_${S}`, 'x', -R]]);
+}
+const NODE_JOINTS = {};
+for (const j of JLIST) for (const t of j.targets) (NODE_JOINTS[t[0]] = NODE_JOINTS[t[0]] || []).push([j.id, t[1], t[2], t[3] || 0]);
+const ACTUATED = Object.keys(NODE_JOINTS);
+
+const NEUTRAL = { lids: 6 };
+for (const S of ['L', 'R']) Object.assign(NEUTRAL, {
+  [`shoulder_roll_${S}`]: 7, [`shoulder_pitch_${S}`]: 3, [`elbow_${S}`]: 12,
+  [`index_${S}`]: 14, [`middle_${S}`]: 18, [`ring_${S}`]: 22, [`pinky_${S}`]: 26, [`thumb_${S}`]: 18,
+  [`knee_${S}`]: 3, [`hip_pitch_${S}`]: 1.5, [`ankle_pitch_${S}`]: 1.5
+});
+const cur = {}, owner = {};
+for (const j of JLIST) { cur[j.id] = NEUTRAL[j.id] || 0; owner[j.id] = 'rest'; }
+function applyJoint(j, v) {
+  for (const t of j.targets) {
+    const n = nodes[t[0]], val = (t[3] || 0) + v * t[2];
+    if (t[1] === 'py') n.position.y = val; else n.rotation[t[1]] = val;
+  }
+}
+JLIST.forEach(j => applyJoint(j, cur[j.id]));
+
+/* ---------------- clips ---------------- */
+const SIDE_KEYS = ['shoulder_pitch', 'shoulder_roll', 'shoulder_yaw', 'elbow', 'wrist_roll', 'wrist_pitch', 'wrist_yaw', 'index', 'middle', 'ring', 'pinky', 'thumb', 'hip_pitch', 'hip_roll', 'hip_yaw', 'knee', 'ankle_pitch', 'ankle_roll', 'toe'];
+const sided = (S, p) => { const o = {}; for (const k in p) o[SIDE_KEYS.includes(k) ? `${k}_${S}` : k] = p[k]; return o; };
+const both = p => ({ ...sided('L', p), ...sided('R', p) });
+const CLIPS = {};
+function keyClip(name, dur, keys, opt = {}) {
+  const ids = new Set(); keys.forEach(k => Object.keys(k[1]).forEach(i => ids.add(i)));
+  const K = keys.map(k => [k[0], { ...k[1] }]);
+  for (const id of ids) {
+    let last; for (const k of K) { if (id in k[1]) last = k[1][id]; else if (last !== undefined) k[1][id] = last; }
+    let next; for (let i = K.length - 1; i >= 0; i--) { if (id in K[i][1]) next = K[i][1][id]; else K[i][1][id] = next; }
+  }
+  const idl = [...ids];
+  CLIPS[name] = {
+    name, dur, loop: !!opt.loop, additive: !!opt.additive, ids: idl,
+    sample(t) {
+      if (t <= K[0][0]) return K[0][1];
+      for (let i = 0; i < K.length - 1; i++) {
+        const a = K[i], b = K[i + 1];
+        if (t < b[0]) { const u = ease((t - a[0]) / (b[0] - a[0])); const o = {}; for (const id of idl) o[id] = lerp(a[1][id], b[1][id], u); return o; }
+      }
+      return K[K.length - 1][1];
+    }
+  };
+}
+function procClip(name, dur, ids, fn, opt = {}) { CLIPS[name] = { name, dur, loop: !!opt.loop, additive: !!opt.additive, ids, sample: fn }; }
+const FINGERS_OPEN = { index: 5, middle: 5, ring: 7, pinky: 9, thumb: 10 };
+for (const S of ['L', 'R', 'Both']) {
+  const P = S === 'Both' ? both : p => sided(S, p);
+  const roll = S === 'L' ? 5 : S === 'R' ? -5 : 0;
+  const up = { shoulder_roll: 78, shoulder_pitch: 16, shoulder_yaw: 88, wrist_pitch: 0, ...FINGERS_OPEN };
+  const k = (t, e, wy) => [t, { ...P({ ...up, elbow: e, wrist_yaw: wy }), head_roll: roll }];
+  keyClip(`Wave_${S}`, 2.5, [k(0, 100, 0), k(0.5, 74, -14), k(0.85, 108, 14), k(1.2, 74, -14), k(1.55, 108, 14), k(1.9, 78, -8), k(2.3, 96, 0)]);
+  const rh = P({ shoulder_pitch: 160, shoulder_roll: 12, shoulder_yaw: 0, elbow: 12, wrist_pitch: 0, ...FINGERS_OPEN });
+  keyClip(`Raise_Hand_${S}`, 2.8, [[0, rh], [2.6, rh]]);
+  const pt = P({ shoulder_pitch: 82, shoulder_roll: 4, shoulder_yaw: -10, elbow: 6, wrist_pitch: 0, index: 0, middle: 88, ring: 92, pinky: 95, thumb: 55 });
+  keyClip(`Point_Forward_${S}`, 2.4, [[0, pt], [2.2, pt]]);
+  const th = { ...P({ shoulder_pitch: 55, shoulder_roll: 6, shoulder_yaw: -30, elbow: 138, wrist_pitch: 25, index: 40, middle: 60, ring: 70, pinky: 75, thumb: 30 }), head_roll: 9, head_pitch: 7 };
+  keyClip(`Think_${S}`, 3.0, [[0, th], [2.8, th]]);
+}
+keyClip('Nod_Yes', 1.5, [[0, { head_pitch: 0 }], [0.25, { head_pitch: -16 }], [0.55, { head_pitch: 4 }], [0.85, { head_pitch: -13 }], [1.15, { head_pitch: 2 }], [1.4, { head_pitch: 0 }]], { additive: true });
+keyClip('Shake_No', 1.5, [[0, { neck_yaw: 0 }], [0.25, { neck_yaw: 22 }], [0.55, { neck_yaw: -22 }], [0.85, { neck_yaw: 18 }], [1.15, { neck_yaw: -14 }], [1.4, { neck_yaw: 0 }]], { additive: true });
+const bowRest = { spine_pitch: 0, neck_pitch: 0, ...both({ shoulder_pitch: 3, elbow: 12 }) };
+const bowP = { spine_pitch: 24, neck_pitch: -14, ...both({ shoulder_pitch: 12, elbow: 10 }) };
+keyClip('Bow', 2.4, [[0, bowRest], [0.7, bowP], [1.5, bowP], [2.3, bowRest]]);
+const shrugP = { ...both({ shoulder_roll: 28, shoulder_pitch: 22, shoulder_yaw: 70, elbow: 92, wrist_pitch: -15, ...FINGERS_OPEN }), head_roll: 9 };
+keyClip('Shrug', 1.6, [[0, shrugP], [1.3, shrugP]]);
+const ct = { head_roll: 15, head_pitch: 6, neck_yaw: 8 };
+keyClip('Head_Tilt_Curious', 2.0, [[0, ct], [1.8, ct]]);
+const cel = (t, e, kn) => [t, { ...both({ shoulder_roll: 150, shoulder_pitch: 12, shoulder_yaw: 0, elbow: e, index: 90, middle: 92, ring: 92, pinky: 90, thumb: 60, knee: kn, hip_pitch: kn / 2, ankle_pitch: kn / 2 }), pelvis_h: -kn * 0.05 }];
+keyClip('Celebrate', 2.2, [cel(0, 20, 3), cel(0.35, 42, 16), cel(0.7, 18, 3), cel(1.05, 42, 16), cel(1.4, 18, 3), cel(2.0, 20, 3)]);
+procClip('Look_Around', 6.5, ['neck_yaw', 'neck_pitch', 'spine_yaw', 'eye_yaw'], t => {
+  const env = Math.sin(PI * clamp(t / 6.5, 0, 1));
+  return { neck_yaw: 48 * Math.sin(t) * env, neck_pitch: 7 * Math.sin(t * 0.7 + 0.6) * env, spine_yaw: 8 * Math.sin(t) * env, eye_yaw: 12 * Math.cos(t) * env };
+});
+procClip('Talk_Gesture', 1, ['shoulder_pitch', 'shoulder_yaw', 'elbow', 'wrist_roll'].flatMap(k => [`${k}_L`, `${k}_R`]), t => ({
+  shoulder_pitch_L: 16 + 5 * Math.sin(t * 1.9), shoulder_pitch_R: 18 + 6 * Math.sin(t * 1.5 + 1),
+  shoulder_yaw_L: 30, shoulder_yaw_R: 32,
+  elbow_L: 55 + 12 * Math.sin(t * 2.1), elbow_R: 60 + 14 * Math.sin(t * 1.7 + 1),
+  wrist_roll_L: 20 + 15 * Math.sin(t * 1.3), wrist_roll_R: 20 + 15 * Math.sin(t * 1.1 + 2)
+}), { loop: true });
+const WALK_P = 1.1;
+procClip('Walk_In_Place', WALK_P, [...['hip_pitch', 'knee', 'ankle_pitch', 'shoulder_pitch', 'elbow'].flatMap(k => [`${k}_L`, `${k}_R`]), 'pelvis_h', 'spine_roll'], t => {
+  const ph = t / WALK_P * 2 * PI, o = {};
+  for (const [S, off] of [['L', 0], ['R', PI]]) {
+    const lift = Math.max(0, Math.sin(ph + off));
+    o[`hip_pitch_${S}`] = 1.5 + 32 * lift;
+    o[`knee_${S}`] = 3 + 62 * lift;
+    o[`ankle_pitch_${S}`] = (o[`knee_${S}`] - o[`hip_pitch_${S}`]) - 8 * lift;
+    o[`shoulder_pitch_${S}`] = 3 + 15 * Math.sin(ph + off + PI);
+    o[`elbow_${S}`] = 18 + 10 * Math.max(0, Math.sin(ph + off + PI));
+  }
+  o.pelvis_h = -0.8 * Math.abs(Math.cos(ph));
+  o.spine_roll = -3 * Math.sin(ph);
+  return o;
+}, { loop: true });
+
+const playing = [];
+function playClip(name, opts = {}) {
+  const clip = CLIPS[name]; if (!clip) throw new Error(`no clip ${name}`);
+  for (const p of playing) if (p.fade !== 'out' && p.clip.ids.some(i => clip.ids.includes(i))) p.fade = 'out';
+  const p = { clip, t: 0, w: 0, fade: 'in', loopFor: opts.loopFor, finished: false };
+  playing.push(p); logEvent('clip', `Playing ${name.replace(/_/g, ' ')}`); return p;
+}
+function stopAllClips() { for (const p of playing) p.fade = 'out'; }
+function stopClipsTouching(ids) { for (const p of playing) if (p.clip.ids.some(i => ids.includes(i))) p.fade = 'out'; }
+function updateClips(dt) {
+  for (let i = playing.length - 1; i >= 0; i--) {
+    const p = playing[i];
+    p.t += dt;
+    if (p.fade === 'in') { p.w = Math.min(1, p.w + dt / 0.35); if (p.w >= 1) p.fade = 'hold'; }
+    if (p.fade !== 'out') {
+      if (!p.clip.loop && p.t >= p.clip.dur) p.fade = 'out';
+      if (p.clip.loop && p.loopFor && p.t >= p.loopFor) p.fade = 'out';
+    }
+    if (p.fade === 'out') { p.w -= dt / 0.45; if (p.w <= 0) { p.finished = true; playing.splice(i, 1); } }
+  }
+}
+
+/* ---------------- command layer, gaze, expressions ---------------- */
+const cmd = new Map();
+function setCmd(id, v) { if (!JD[id]) return; const c = cmd.get(id); if (c) { c.v = v; c.tw = 1; } else cmd.set(id, { v, w: 0, tw: 1 }); }
+function releaseCmd(id) { const c = cmd.get(id); if (c) c.tw = 0; }
+function releaseAllCmd() { for (const c of cmd.values()) c.tw = 0; }
+function updateCmd(dt) { for (const [id, c] of cmd) { c.w += clamp(c.tw - c.w, -dt / 0.45, dt / 0.45); if (c.w <= 0 && c.tw === 0) cmd.delete(id); } }
+const gaze = { w: 0, tw: 0, yaw: 0, pitch: 0, point: null };
+function setGaze(o) { gaze.point = o.point || null; gaze.yaw = o.yaw || 0; gaze.pitch = o.pitch || 0; gaze.tw = 1; }
+function releaseGaze() { gaze.tw = 0; }
+
+const EXPR = {
+  neutral: { lids: 6, brow_raise: 0, brow_tilt: 0, iris: 1, color: '#2fbf8a' },
+  happy: { lids: 26, brow_raise: 2.5, brow_tilt: -4, iris: 1.1, color: '#5fe3ae' },
+  curious: { lids: 2, brow_raise: 4.5, brow_tilt: -8, iris: 1.15, color: '#4fd1c5' },
+  surprised: { lids: 0, brow_raise: 6, brow_tilt: -6, iris: 0.72, color: '#9be7ff' },
+  thinking: { lids: 30, brow_raise: 1.5, brow_tilt: 8, iris: 0.9, color: '#e0a33a' },
+  concerned: { lids: 18, brow_raise: 2, brow_tilt: -16, iris: 0.9, color: '#e0a33a' },
+  focused: { lids: 30, brow_raise: -2, brow_tilt: 12, iris: 0.85, color: '#2fbf8a' },
+  error: { lids: 20, brow_raise: -3, brow_tilt: 16, iris: 0.8, color: '#ec5a5e' }
+};
+for (const e of Object.values(EXPR)) e.col = C(e.color);
+let expr = 'neutral', exprTimer = 0;
+const exprCur = { ...EXPR.neutral };
+function setExpression(name, ms) {
+  if (!EXPR[name]) return; expr = name; clearTimeout(exprTimer);
+  if (ms) exprTimer = setTimeout(() => { expr = 'neutral'; }, ms);
+}
+
+/* ---------------- tracking ---------------- */
+const trk = { mode: 'off', state: 'IDLE', conf: 0, yaw: 0, pitch: 0, w: 0, sens: 1, smooth: 0.6, maxYaw: 70, lastSeen: 0, lastPointer: -1e9, ndc: new THREE.Vector2(), rawYaw: 0, rawPitch: 0, msg: '' };
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3();
+function lookAngles(point) {
+  nodes.neck.getWorldPosition(_v1); _v1.y += 0.12;
+  const d = _v2.copy(point).sub(_v1);
+  return { yaw: Math.atan2(d.x, d.z) * R2D, pitch: Math.atan2(d.y, Math.hypot(d.x, d.z)) * R2D };
+}
+function headDist(yaw, pitch) {
+  const ny = clamp(yaw * 0.72, -70, 70), hy = clamp(yaw - ny, -20, 20);
+  const np = clamp(pitch * 0.5, -30, 30), hp = clamp(pitch - np, -25, 25);
+  return { neck_yaw: ny, head_yaw: hy, neck_pitch: np, head_pitch: hp };
+}
+function setTrackState(s, msg) {
+  if (msg !== undefined) trk.msg = msg;
+  if (trk.state !== s) { trk.state = s; logEvent('tracking', s.replace(/_/g, ' ').toLowerCase()); }
+}
+const raycaster = new THREE.Raycaster();
+function pointerWorld() {
+  raycaster.setFromCamera(trk.ndc, camera);
+  const head = nodes.head.getWorldPosition(new THREE.Vector3());
+  const toCam = camera.position.clone().sub(head).normalize();
+  const p0 = head.clone().add(toCam.multiplyScalar(0.9));
+  const n = camera.getWorldDirection(new THREE.Vector3());
+  const out = new THREE.Vector3();
+  return raycaster.ray.intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, p0), out) ? out : null;
+}
+const camVideo = $('#cam'); let camStream = null, camCtx = null, prevGray = null, lastCamProc = 0;
+const camCentroid = { x: 0.5, y: 0.4 };
+async function startCamera() {
+  setTrackState('CAMERA_INITIALIZING', 'Asking for camera access…');
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('unsupported');
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }, audio: false });
+    if (trk.mode !== 'camera') { stopCamera(); return; }
+    camVideo.srcObject = camStream; camVideo.hidden = false; await camVideo.play();
+    const cc = document.createElement('canvas'); cc.width = 64; cc.height = 48;
+    camCtx = cc.getContext('2d', { willReadFrequently: true }); prevGray = null;
+    setTrackState('SEARCHING', 'Move into view of your camera.');
+  } catch (e) {
+    setTrackState('ERROR', 'Camera isn\u2019t available in this view (blocked or no camera). Pointer follow works everywhere.');
+    logEvent('tracking', 'Camera failed: ' + (e.name || e.message), true);
+  }
+}
+function stopCamera() {
+  if (camStream) camStream.getTracks().forEach(t => t.stop());
+  camStream = null; camCtx = null; camVideo.hidden = true; camVideo.srcObject = null;
+}
+function processCamera() {
+  if (!camCtx || camVideo.readyState < 2) return null;
+  camCtx.drawImage(camVideo, 0, 0, 64, 48);
+  const d = camCtx.getImageData(0, 0, 64, 48).data, N = 64 * 48;
+  const gray = new Uint8ClampedArray(N);
+  let sx = 0, sy = 0, sw = 0;
+  for (let i = 0; i < N; i++) {
+    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    const Y = 0.299 * r + 0.587 * g + 0.114 * b; gray[i] = Y;
+    const cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b, cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+    const x = i % 64, y = (i / 64) | 0;
+    let w = 0;
+    if (cr > 135 && cr < 178 && cb > 82 && cb < 130 && Y > 50) w += 1.15 - y / 48;
+    if (prevGray && Math.abs(Y - prevGray[i]) > 24) w += 0.6;
+    if (w > 0) { sx += x * w; sy += y * w; sw += w; }
+  }
+  prevGray = gray;
+  if (sw < N * 0.012) return { found: false, conf: 0 };
+  return { found: true, x: sx / sw / 64, y: sy / sw / 48, conf: clamp(sw / (N * 0.09), 0, 1) };
+}
+function updateTracking(dt, now) {
+  let found = false;
+  if (trk.mode === 'pointer') {
+    if (now - trk.lastPointer < 2500) {
+      const p = pointerWorld();
+      if (p) { const a = lookAngles(p); trk.rawYaw = a.yaw * trk.sens; trk.rawPitch = a.pitch * trk.sens; found = true; trk.conf = 1; }
+    }
+  } else if (trk.mode === 'camera' && camCtx) {
+    if (now - lastCamProc > 66) {
+      lastCamProc = now;
+      const r = processCamera();
+      if (r && r.found) {
+        const a = 1 - Math.pow(trk.smooth, 0.6);
+        camCentroid.x = lerp(camCentroid.x, r.x, a); camCentroid.y = lerp(camCentroid.y, r.y, a);
+        trk.conf = lerp(trk.conf, r.conf, 0.3); trk.lastSeen = now;
+      } else trk.conf = lerp(trk.conf, 0, 0.2);
+    }
+    if (now - trk.lastSeen < 300) {
+      const mx = -(camCentroid.x - 0.5) * 2 * trk.sens, my = -(camCentroid.y - 0.45) * 2 * trk.sens;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+      const p = camera.position.clone().addScaledVector(right, mx * 0.6).addScaledVector(up, my * 0.4);
+      const a = lookAngles(p); trk.rawYaw = a.yaw; trk.rawPitch = a.pitch; found = true;
+    }
+  }
+  if (trk.mode === 'off') { trk.w = Math.max(0, trk.w - dt / 0.6); if (trk.state !== 'IDLE' && trk.w === 0) setTrackState('IDLE', ''); return; }
+  if (trk.state === 'ERROR' || trk.state === 'CAMERA_INITIALIZING') { trk.w = Math.max(0, trk.w - dt / 0.6); return; }
+  const lastSeen = trk.mode === 'pointer' ? trk.lastPointer : trk.lastSeen;
+  if (found) {
+    setTrackState('TRACKING', trk.mode === 'pointer' ? 'Following your pointer.' : 'Following you.');
+    const k = 1 - Math.pow(trk.smooth, dt * 30);
+    const ty = clamp(trk.rawYaw, -trk.maxYaw, trk.maxYaw), tp = clamp(trk.rawPitch, -30, 30);
+    if (Math.abs(ty - trk.yaw) > 1.2) trk.yaw = lerp(trk.yaw, ty, k);
+    if (Math.abs(tp - trk.pitch) > 1.2) trk.pitch = lerp(trk.pitch, tp, k);
+    trk.w = Math.min(1, trk.w + dt / 0.5);
+  } else {
+    const since = now - lastSeen;
+    if (since < (trk.mode === 'pointer' ? 4000 : 1500)) setTrackState('TARGET_LOST', 'Holding the last direction.');
+    else if (trk.w > 0) { setTrackState('RETURNING', 'Returning to center.'); trk.w = Math.max(0, trk.w - dt / 0.9); }
+    else setTrackState('SEARCHING', trk.mode === 'pointer' ? 'Hover or touch the 3D view.' : 'Move into view of your camera.');
+    if (trk.mode === 'pointer') trk.conf = 0;
+  }
+}
+
+/* ---------------- speech ---------------- */
+let speaking = false, speechAmp = 0, speechPulse = 0, voiceOn = true;
+function speak(text) {
+  return new Promise(res => {
+    showReply(text);
+    speaking = true;
+    let settled = false;
+    const done = () => { if (!settled) { settled = true; speaking = false; res(); } };
+    const synth = window.speechSynthesis;
+    const fallbackMs = Math.min(9000, 700 + text.length * 60);
+    if (!voiceOn || !synth || !window.SpeechSynthesisUtterance) { setTimeout(done, fallbackMs); return; }
+    try {
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.0; u.pitch = 0.85;
+      u.onboundary = () => { speechPulse = 1; };
+      u.onend = done; u.onerror = done;
+      synth.speak(u);
+      setTimeout(done, 2500 + text.length * 110);
+    } catch (e) { setTimeout(done, fallbackMs); }
+  });
+}
+function stopSpeech() { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { } speaking = false; }
+function showReply(text) { const r = $('#reply'); r.hidden = false; r.textContent = text; }
+
+/* ---------------- robot state machine ---------------- */
+const STATE_LABEL = { IDLE: 'Idle', LISTENING: 'Listening', THINKING: 'Planning', EXECUTING: 'Executing', SPEAKING: 'Speaking', ERROR: 'Error', STOPPED: 'Stopped' };
+const ALLOWED = {
+  IDLE: ['LISTENING', 'THINKING', 'EXECUTING', 'SPEAKING', 'STOPPED', 'ERROR'],
+  LISTENING: ['IDLE', 'THINKING', 'STOPPED', 'ERROR'],
+  THINKING: ['EXECUTING', 'IDLE', 'ERROR', 'STOPPED', 'SPEAKING'],
+  EXECUTING: ['SPEAKING', 'IDLE', 'ERROR', 'STOPPED', 'THINKING', 'LISTENING'],
+  SPEAKING: ['EXECUTING', 'IDLE', 'STOPPED', 'ERROR', 'THINKING'],
+  ERROR: ['IDLE', 'THINKING', 'LISTENING', 'EXECUTING', 'STOPPED', 'SPEAKING'],
+  STOPPED: ['IDLE']
+};
+let robotState = 'IDLE', lastActivity = performance.now();
+function paintState() { const chip = $('#stateChip'); chip.dataset.s = robotState; $('#stateText').textContent = STATE_LABEL[robotState]; }
+function setState(s, why) {
+  if (s === robotState) return true;
+  if (!ALLOWED[robotState].includes(s)) { logEvent('state', `Blocked change from ${STATE_LABEL[robotState]} to ${STATE_LABEL[s]}`, true); return false; }
+  logEvent('state', `${STATE_LABEL[robotState]} to ${STATE_LABEL[s]}${why ? ' (' + why + ')' : ''}`);
+  robotState = s; lastActivity = performance.now(); paintState();
+  return true;
+}
+
+/* ---------------- per-frame pose resolution ---------------- */
+let estop = false, bootT = 0, nextBlink = 1.8, blinkT = -1;
+const saccade = { yaw: 0, pitch: 0, next: 1 };
+const manual = new Map();
+const tgt = {};
+function evaluate(dt, t) {
+  if (estop) return;
+  const amp = reducedMotion ? 0.5 : 1;
+  for (const j of JLIST) { tgt[j.id] = NEUTRAL[j.id] || 0; owner[j.id] = 'rest'; }
+  const br = Math.sin(t * 2 * PI / 4.2) * amp;
+  tgt.spine_pitch += 0.8 * br; tgt.neck_pitch -= 0.5 * br;
+  tgt.shoulder_roll_L += 0.6 * br; tgt.shoulder_roll_R += 0.6 * br;
+  tgt.spine_roll += 1.0 * Math.sin(t * 0.37) * amp;
+  for (const p of playing) {
+    if (p.clip.additive) continue;
+    const pose = p.clip.sample(p.t), w = ease(p.w);
+    for (const id in pose) { if (!(id in tgt)) continue; tgt[id] = lerp(tgt[id], pose[id], w); if (w > 0.5) owner[id] = p.clip.name; }
+  }
+  for (const [id, c] of cmd) { const w = ease(c.w); tgt[id] = lerp(tgt[id], c.v, w); if (w > 0.5) owner[id] = 'command'; }
+  let eyeGoal = null;
+  const gz = (a, w, src) => {
+    const y = a.yaw - cur.spine_yaw, p = a.pitch + cur.spine_pitch, h = headDist(y, p), ww = ease(w);
+    for (const k in h) { tgt[k] = lerp(tgt[k], h[k], ww); if (ww > 0.5) owner[k] = src; }
+    eyeGoal = { yaw: y, pitch: p, w: ww };
+  };
+  gaze.w += clamp(gaze.tw - gaze.w, -dt / 0.5, dt / 0.5);
+  if (gaze.w > 0) gz(gaze.point ? lookAngles(gaze.point()) : { yaw: gaze.yaw, pitch: gaze.pitch }, gaze.w, 'command');
+  if (trk.w > 0) gz({ yaw: trk.yaw, pitch: trk.pitch }, trk.w, 'tracking');
+  for (const p of playing) {
+    if (!p.clip.additive) continue;
+    const pose = p.clip.sample(p.t), w = ease(p.w);
+    for (const id in pose) { tgt[id] += pose[id] * w; if (w > 0.5) owner[id] = p.clip.name; }
+  }
+  saccade.next -= dt;
+  if (saccade.next <= 0 && !reducedMotion) { saccade.yaw = (Math.random() - 0.5) * 12; saccade.pitch = (Math.random() - 0.5) * 7; saccade.next = 1.2 + Math.random() * 2.4; }
+  let ey = saccade.yaw, ep = saccade.pitch;
+  if (eyeGoal) {
+    ey = lerp(ey, clamp(eyeGoal.yaw - (cur.neck_yaw + cur.head_yaw), -22, 22) + saccade.yaw * 0.25, eyeGoal.w);
+    ep = lerp(ep, clamp(eyeGoal.pitch - (cur.neck_pitch + cur.head_pitch), -18, 18) + saccade.pitch * 0.25, eyeGoal.w);
+  }
+  tgt.eye_yaw += ey; tgt.eye_pitch += ep;
+  const E = EXPR[expr], ek = 1 - Math.exp(-dt * 6);
+  for (const k of ['lids', 'brow_raise', 'brow_tilt', 'iris']) exprCur[k] = lerp(exprCur[k], E[k], ek);
+  tgt.lids = exprCur.lids; tgt.brow_raise = exprCur.brow_raise; tgt.brow_tilt = exprCur.brow_tilt;
+  owner.lids = owner.brow_raise = owner.brow_tilt = 'expression';
+  nextBlink -= dt;
+  if (nextBlink <= 0) { blinkT = 0; nextBlink = 2 + Math.random() * 4.5; }
+  if (blinkT >= 0) { blinkT += dt; if (blinkT < 0.16) { tgt.lids = 100; owner.lids = 'blink'; } else blinkT = -1; }
+  if (bootT < 0.7) { tgt.lids = 100; owner.lids = 'boot'; }
+  speechPulse = Math.max(0, speechPulse - dt * 4);
+  const want = speaking ? clamp(0.3 + 0.7 * Math.abs(Math.sin(t * 15) * Math.sin(t * 6.1 + 1)) + speechPulse * 0.4, 0, 1) : 0;
+  speechAmp = lerp(speechAmp, want, 1 - Math.exp(-dt * 18));
+  if (speaking || speechAmp > 0.02) { tgt.jaw = speechAmp * 12; owner.jaw = 'speech'; }
+  for (const [id, v] of manual) { tgt[id] = v; owner[id] = 'manual'; }
+  for (const j of JLIST) {
+    const target = clamp(tgt[j.id], j.min, j.max), c = cur[j.id];
+    let step = (target - c) * (1 - Math.exp(-dt * j.k));
+    const cap = j.vel * dt; step = clamp(step, -cap, cap);
+    cur[j.id] = c + step; applyJoint(j, cur[j.id]);
+  }
+  const ir = exprCur.iris; nodes.iris_L.scale.set(ir, ir, 1); nodes.iris_R.scale.set(ir, ir, 1);
+}
+
+const STATE_COLOR = { IDLE: C('#2fbf8a'), LISTENING: C('#4fd1c5'), THINKING: C('#e0a33a'), EXECUTING: C('#3ee0a0'), SPEAKING: C('#5fe3ae'), ERROR: C('#ec5a5e'), STOPPED: C('#ec5a5e') };
+function updateMaterials(dt, t) {
+  bootT += dt;
+  const boot = ease(clamp((bootT - 0.4) / 1.2, 0, 1));
+  const k = 1 - Math.exp(-dt * 6);
+  eyeMat.emissive.lerp(EXPR[expr].col, k);
+  eyeMat.emissiveIntensity = (estop ? 0.6 : 2.2) * boot;
+  coreMat.emissive.lerp(STATE_COLOR[robotState], k);
+  let pulse = 0.85 + 0.15 * Math.sin(t * 2);
+  if (robotState === 'THINKING' || robotState === 'LISTENING') pulse = 0.6 + 0.4 * Math.sin(t * 7);
+  if (robotState === 'SPEAKING') pulse = 0.7 + speechAmp * 0.8;
+  coreMat.emissiveIntensity = 2.2 * pulse * boot;
+  mouthMat.emissiveIntensity = (0.35 + speechAmp * 2.6) * boot;
+  nodes.mouth.scale.x = 0.6 + speechAmp * 0.7;
+}
+
+/* ---------------- IK (pattern search over the arm chain) ---------------- */
+const _M0 = new THREE.Matrix4(), _M1 = new THREE.Matrix4(), _E = new THREE.Euler(), _Q = new THREE.Quaternion(), _ONE = new THREE.Vector3(1, 1, 1), _P = new THREE.Vector3();
+function nodeRaw(name, vals) {
+  const n = nodes[name], r = { x: n.rotation.x, y: n.rotation.y, z: n.rotation.z };
+  for (const [id, axis, k, off] of (NODE_JOINTS[name] || [])) if (axis !== 'py') r[axis] = off + (id in vals ? vals[id] : cur[id]) * k;
+  return r;
+}
+function chainGrip(S, vals) {
+  _M0.copy(nodes.pelvis.matrixWorld);
+  for (const nn of ['spine', 'chest', `shoulder_${S}`, `elbow_${S}`, `wrist_${S}`]) {
+    const n = nodes[nn], r = nodeRaw(nn, vals);
+    _E.set(r.x, r.y, r.z, n.rotation.order); _Q.setFromEuler(_E);
+    _M0.multiply(_M1.compose(n.position, _Q, _ONE));
+  }
+  return _P.copy(nodes[`grip_${S}`].position).applyMatrix4(_M0);
+}
+const IK_TOL = 0.025;
+function solveIK(S, target, lean) {
+  robot.updateMatrixWorld(true);
+  const ids = ['spine_pitch', 'spine_yaw', `shoulder_pitch_${S}`, `shoulder_roll_${S}`, `shoulder_yaw_${S}`, `elbow_${S}`];
+  const lims = [lean ? [0, 18] : [0, 6], lean ? [-25, 25] : [-10, 10], [-30, 150], [-10, 60], [-60, 60], [0, 145]];
+  const reg = [lean ? 0.002 : 0.02, lean ? 0.002 : 0.02, 0, 0.0004, 0.0008, 0];
+  const fixed = { [`wrist_pitch_${S}`]: 0, [`wrist_roll_${S}`]: 0, [`wrist_yaw_${S}`]: 0 };
+  const cost = q => {
+    const vals = { ...fixed }; ids.forEach((id, i) => { vals[id] = q[i]; });
+    const d = chainGrip(S, vals).distanceTo(target) * 100;
+    let c = d * d; for (let i = 0; i < 6; i++) c += reg[i] * q[i] * q[i];
+    return c;
+  };
+  const seeds = [ids.map(id => cur[id]), [2, 0, 50, 8, 0, 45], [4, 0, 70, 10, -20, 20], [2, 0, 30, 6, 10, 80], [3, 0, 95, 15, 0, 30]];
+  let best = null, bestC = Infinity;
+  for (const seed of seeds) {
+    let q = seed.map((v, i) => clamp(v, lims[i][0], lims[i][1])), c = cost(q), step = 20, iter = 0;
+    while (step > 0.15 && iter++ < 700) {
+      let improved = false;
+      for (let i = 0; i < 6 && !improved; i++) for (const dir of [1, -1]) {
+        const qn = q.slice(); qn[i] = clamp(q[i] + dir * step, lims[i][0], lims[i][1]);
+        if (qn[i] === q[i]) continue;
+        const cn = cost(qn); if (cn < c) { q = qn; c = cn; improved = true; break; }
+      }
+      if (!improved) step *= 0.5;
+    }
+    if (c < bestC) { bestC = c; best = q; }
+  }
+  const vals = { ...fixed }; ids.forEach((id, i) => { vals[id] = best[i]; });
+  const err = chainGrip(S, vals).distanceTo(target);
+  return { q: vals, err };
+}
+
+/* ---------------- action executor ---------------- */
+let planToken = 0, currentPlan = null;
+class Cancelled extends Error { constructor() { super('cancelled'); this.cancel = true; } }
+function sleep(ms, tok) {
+  return new Promise((res, rej) => {
+    const t0 = performance.now();
+    const id = setInterval(() => {
+      if (tok !== planToken) { clearInterval(id); rej(new Cancelled()); }
+      else if (performance.now() - t0 >= ms) { clearInterval(id); res(); }
+    }, 30);
+  });
+}
+async function waitFor(pred, timeout, tok) {
+  const t0 = performance.now();
+  for (;;) {
+    if (tok !== planToken) throw new Cancelled();
+    if (pred()) return true;
+    if (performance.now() - t0 > timeout) return false;
+    await sleep(40, tok);
+  }
+}
+const sideKey = s => (s === 'left' ? 'L' : 'R');
+const sideName = S => (S === 'L' ? 'left' : 'right');
+const HAND = {
+  open: { index: 2, middle: 2, ring: 3, pinky: 4, thumb: 4 },
+  relaxed: { index: 14, middle: 18, ring: 22, pinky: 26, thumb: 18 },
+  close: { index: 92, middle: 94, ring: 94, pinky: 92, thumb: 62 },
+  pinch: { index: 52, middle: 30, ring: 28, pinky: 26, thumb: 48 },
+  point: { index: 0, middle: 90, ring: 93, pinky: 94, thumb: 55 },
+  grip: { index: 58, middle: 60, ring: 60, pinky: 56, thumb: 45 }
+};
+const FINGER_IDS = ['index', 'middle', 'ring', 'pinky', 'thumb'];
+function setHand(S, pose) { for (const [k, v] of Object.entries(HAND[pose])) setCmd(`${k}_${S}`, v); }
+function releaseHand(S) { FINGER_IDS.forEach(k => releaseCmd(`${k}_${S}`)); }
+function armIds(S) { return ['shoulder_pitch', 'shoulder_roll', 'shoulder_yaw', 'elbow', 'wrist_pitch', 'wrist_roll', 'wrist_yaw'].map(k => `${k}_${S}`); }
+function releaseArm(S) { armIds(S).forEach(releaseCmd); releaseCmd('spine_pitch'); releaseCmd('spine_yaw'); if (!held[S]) releaseHand(S); }
+const objPos = name => OBJ[name].mesh.getWorldPosition(new THREE.Vector3());
+const gripPos = S => nodes[`grip_${S}`].getWorldPosition(new THREE.Vector3());
+function note(it, text) { if (it) { it.note = text; renderPlan(); } }
+
+async function moveArmTo(S, target, tok, it, label) {
+  note(it, label);
+  stopClipsTouching([...armIds(S), 'spine_pitch', 'spine_yaw']);
+  let sol = solveIK(S, target, false);
+  if (sol.err > IK_TOL) {
+    logEvent('ik', `${label}: ${cm(sol.err)} short with an upright torso, retrying with a lean`);
+    note(it, `${label} (leaning in to recover)`);
+    sol = solveIK(S, target, true);
+  }
+  if (sol.err > IK_TOL) throw new Error(`the target is ${cm(sol.err)} beyond my reach, even leaning in`);
+  for (const [id, v] of Object.entries(sol.q)) setCmd(id, v);
+  const tol = sol.err + 0.015;
+  const ok = await waitFor(() => gripPos(S).distanceTo(target) < tol, 3000, tok);
+  if (!ok) { const d = gripPos(S).distanceTo(target); if (d > 0.045) throw new Error(`my hand stalled ${cm(d)} from the target`); }
+  logEvent('ik', `${label}: reached within ${(gripPos(S).distanceTo(target) * 100).toFixed(1)} cm`);
+}
+async function doPickUp(name, tok, it) {
+  const o = OBJ[name];
+  if (o.held) throw new Error(`already holding the ${o.label}`);
+  if (!o.resting) await waitFor(() => o.resting, 2000, tok);
+  const c = objPos(name), S = c.x < 0 ? 'R' : 'L';
+  if (held[S]) throw new Error(`the ${sideName(S)} hand is already holding the ${OBJ[held[S]].label}`);
+  setGaze({ point: () => objPos(name) }); setExpression('focused');
+  setHand(S, 'open');
+  await moveArmTo(S, c.clone().add(new THREE.Vector3(0, 0.11, 0)), tok, it, `Approach above the ${o.label}`);
+  await moveArmTo(S, c.clone(), tok, it, `Lower to the ${o.label}`);
+  note(it, 'Close grip'); setHand(S, 'grip'); await sleep(450, tok);
+  const d = gripPos(S).distanceTo(objPos(name));
+  if (d > 0.035) { setHand(S, 'open'); throw new Error(`grasp check failed: the hand is ${cm(d)} from the ${o.label}`); }
+  attach(S, name);
+  logEvent('grasp', `Holding the ${o.label} (verified at ${(d * 100).toFixed(1)} cm)`);
+  await moveArmTo(S, gripPos(S).add(new THREE.Vector3(0, 0.12, 0)), tok, it, 'Lift');
+  setExpression('happy', 1500); note(it, `Holding the ${o.label} in the ${sideName(S)} hand`);
+}
+async function doPlace(pad, tok, it) {
+  const S = held.R ? 'R' : held.L ? 'L' : null;
+  if (!S) throw new Error('not holding anything to place');
+  const name = held[S], o = OBJ[name], P = PADS[pad];
+  setGaze({ point: () => P.pos }); setExpression('focused');
+  const rest = P.pos.clone().add(new THREE.Vector3(0, o.half + 0.003, 0));
+  let off = objPos(name).sub(gripPos(S));
+  await moveArmTo(S, rest.clone().sub(off).add(new THREE.Vector3(0, 0.11, 0)), tok, it, `Carry to the ${P.label}`);
+  off = objPos(name).sub(gripPos(S));
+  await moveArmTo(S, rest.clone().sub(off).add(new THREE.Vector3(0, 0.004, 0)), tok, it, `Lower onto the ${P.label}`);
+  if (objPos(name).distanceTo(rest) > 0.012) { off = objPos(name).sub(gripPos(S)); await moveArmTo(S, rest.clone().sub(off), tok, it, 'Correct placement'); }
+  note(it, 'Release'); setHand(S, 'open'); await sleep(250, tok); detach(S);
+  await waitFor(() => o.resting, 1500, tok); await sleep(250, tok);
+  const w = objPos(name), dxz = Math.hypot(w.x - P.pos.x, w.z - P.pos.z);
+  if (!o.resting || dxz > 0.05) throw new Error(`placement check failed: the ${o.label} is ${cm(dxz)} from the pad center`);
+  logEvent('place', `Placed the ${o.label} ${(dxz * 100).toFixed(1)} cm from the ${P.label} center`);
+  try { await moveArmTo(S, gripPos(S).add(new THREE.Vector3(0, 0.1, -0.03)), tok, it, 'Retreat'); } catch (e) { if (e.cancel) throw e; }
+  releaseArm(S); releaseHand(S); releaseGaze(); setExpression('happy', 1800);
+  note(it, `Verified on the ${P.label}`);
+}
+async function doReach(name, tok, it) {
+  const o = OBJ[name], c = objPos(name), S = c.x < 0 ? 'R' : 'L';
+  setGaze({ point: () => objPos(name) }); setExpression('focused');
+  setHand(S, 'point');
+  try {
+    await moveArmTo(S, c.clone().add(new THREE.Vector3(0, 0.06, 0)), tok, it, `Reach the ${o.label}`);
+    await sleep(900, tok);
+  } finally { releaseArm(S); releaseHand(S); releaseGaze(); }
+}
+const GESTURES = {
+  wave: { clip: 'Wave', sided: true, expr: 'happy' }, raise_hand: { clip: 'Raise_Hand', sided: true }, point: { clip: 'Point_Forward', sided: true, expr: 'focused' },
+  think: { clip: 'Think', sided: true, expr: 'thinking' }, nod: { clip: 'Nod_Yes' }, shake_head: { clip: 'Shake_No' }, bow: { clip: 'Bow' },
+  shrug: { clip: 'Shrug', expr: 'curious' }, celebrate: { clip: 'Celebrate', expr: 'happy' }, look_around: { clip: 'Look_Around', expr: 'curious' }, curious_tilt: { clip: 'Head_Tilt_Curious', expr: 'curious' }
+};
+async function playAndWait(name, tok, opts) {
+  const p = playClip(name, opts);
+  return waitFor(() => p.finished || p.fade === 'out', 30000, tok);
+}
+async function runAction(a, tok, it) {
+  lastActivity = performance.now();
+  switch (a.type) {
+    case 'head_look': {
+      if (trk.w > 0.5) note(it, 'Tracking has priority over head commands');
+      setGaze({ yaw: a.yaw, pitch: a.pitch });
+      const h = headDist(a.yaw, a.pitch);
+      await waitFor(() => Math.abs(cur.neck_yaw + cur.head_yaw - (h.neck_yaw + h.head_yaw)) < 4 && Math.abs(cur.neck_pitch + cur.head_pitch - (h.neck_pitch + h.head_pitch)) < 4, 1600, tok);
+      await sleep(a.hold_ms, tok); releaseGaze(); break;
+    }
+    case 'look_at': {
+      const getter = a.target === 'camera' ? () => camera.position : OBJ[a.target] ? () => objPos(a.target) : () => PADS[a.target].pos;
+      setGaze({ point: getter }); await sleep(500 + a.hold_ms, tok); releaseGaze(); break;
+    }
+    case 'recenter_head': setGaze({ yaw: 0, pitch: 0 }); await sleep(700, tok); releaseGaze(); break;
+    case 'gesture': {
+      const g = GESTURES[a.name]; let clip = g.clip;
+      if (g.sided) clip += a.side === 'both' ? '_Both' : `_${sideKey(a.side)}`;
+      if (g.expr) setExpression(g.expr, (CLIPS[clip].dur + 0.6) * 1000);
+      await playAndWait(clip, tok); break;
+    }
+    case 'expression': setExpression(a.name, a.duration_ms); await sleep(250, tok); break;
+    case 'speak': {
+      const blocking = a.wait !== false;
+      if (blocking) setState('SPEAKING');
+      const armsBusy = playing.some(p => p.fade !== 'out' && p.clip.ids.some(i => /elbow/.test(i))) || [...cmd.keys()].some(i => /elbow/.test(i));
+      const talk = !armsBusy && blocking ? playClip('Talk_Gesture') : null;
+      await speak(a.text);
+      if (talk) talk.fade = 'out';
+      if (tok !== planToken) throw new Cancelled();
+      if (blocking) setState('EXECUTING');
+      break;
+    }
+    case 'hand_pose': {
+      for (const S of a.side === 'both' ? ['L', 'R'] : [sideKey(a.side)]) { if (held[S] && a.pose === 'open') detach(S); setHand(S, a.pose); }
+      await sleep(400, tok); break;
+    }
+    case 'arm_pose': {
+      const S = sideKey(a.side); stopClipsTouching(armIds(S));
+      setCmd(`shoulder_pitch_${S}`, a.shoulder_pitch); setCmd(`shoulder_roll_${S}`, a.shoulder_roll); setCmd(`elbow_${S}`, a.elbow);
+      await sleep(900 + a.hold_ms, tok); armIds(S).forEach(releaseCmd); break;
+    }
+    case 'torso_turn': setCmd('spine_yaw', a.yaw); await sleep(900 + a.hold_ms, tok); releaseCmd('spine_yaw'); break;
+    case 'walk_in_place': await playAndWait('Walk_In_Place', tok, { loopFor: a.steps * WALK_P / 2 }); break;
+    case 'pick_up': await doPickUp(a.object, tok, it); break;
+    case 'place': await doPlace(a.target, tok, it); break;
+    case 'reach': await doReach(a.object, tok, it); break;
+    case 'wait': await sleep(a.ms, tok); break;
+    case 'reset_pose': releaseAllCmd(); stopAllClips(); releaseGaze(); setExpression('neutral'); await sleep(500, tok); break;
+    case 'stop': emergencyStop(); throw new Cancelled();
+    default: throw new Error(`unsupported action ${a.type}`);
+  }
+}
+function cancelPlan() {
+  planToken++;
+  if (currentPlan) { currentPlan.items.forEach(it => { if (it.status === 'running' || it.status === 'queued') it.status = 'cancelled'; }); renderPlan(); }
+  stopAllClips(); stopSpeech();
+}
+async function runPlan(actions, meta = {}) {
+  cancelPlan(); const tok = planToken;
+  const plan = currentPlan = { items: actions.map(a => ({ a, status: 'queued', note: '' })), meta };
+  const steps = () => plan.items.map(it => ({ type: it.a.type, status: it.status, note: it.note || undefined }));
+  const cancelled = () => ({ status: 'cancelled', detail: 'Interrupted by a newer command or an emergency stop.', steps: steps() });
+  renderPlan();
+  if (!actions.length) { setState('IDLE'); return { status: 'completed', detail: 'Nothing to do.', steps: [] }; }
+  setState('EXECUTING');
+  const pending = [];
+  let failed = null;
+  for (const it of plan.items) {
+    if (tok !== planToken) return cancelled();
+    it.status = 'running'; renderPlan();
+    const p = runAction(it.a, tok, it).then(() => { it.status = 'done'; renderPlan(); }, e => { it.status = e.cancel ? 'cancelled' : 'failed'; if (!e.cancel) it.note = e.message; renderPlan(); throw e; });
+    try { if (it.a.wait === false) pending.push(p.catch(() => { })); else await p; }
+    catch (e) { if (e.cancel) return cancelled(); failed = e; break; }
+  }
+  if (failed) {
+    plan.items.forEach(it => { if (it.status === 'queued') it.status = 'skipped'; }); renderPlan();
+    logEvent('error', failed.message, true);
+    for (const S of ['L', 'R']) releaseArm(S);
+    releaseGaze();
+    setState('ERROR', 'action failed'); setExpression('concerned', 3500);
+    await speak(`I couldn't finish that: ${failed.message}.`);
+    if (tok === planToken) setState('IDLE');
+    return { status: 'failed', detail: failed.message, steps: steps() };
+  }
+  await Promise.all(pending);
+  if (tok !== planToken) return cancelled();
+  setState('IDLE', 'plan complete');
+  return { status: 'completed', detail: 'All steps finished and verified by the simulation.', steps: steps() };
+}
+function emergencyStop() {
+  cancelPlan(); estop = true; releaseAllCmd(); releaseGaze();
+  robotState = 'STOPPED'; paintState();
+  const b = $('#estop'); b.textContent = 'Resume'; b.setAttribute('aria-pressed', 'true');
+  logEvent('safety', 'Emergency stop: all motion frozen', true);
+}
+function resume() {
+  estop = false; manual.clear(); setExpression('neutral');
+  const b = $('#estop'); b.textContent = 'Stop'; b.setAttribute('aria-pressed', 'false');
+  setState('IDLE', 'resumed'); logEvent('safety', 'Resumed from emergency stop');
+}
+
+/* ---------------- validation (safety layer for plans) ---------------- */
+const OBJ_NAMES = Object.keys(OBJ), PAD_NAMES = Object.keys(PADS);
+const SCHEMA = {
+  head_look: { yaw: ['num', -80, 80, 0], pitch: ['num', -35, 35, 0], hold_ms: ['num', 0, 6000, 900] },
+  look_at: { target: ['enum', ['camera', ...OBJ_NAMES, ...PAD_NAMES]], hold_ms: ['num', 0, 6000, 1400] },
+  recenter_head: {},
+  gesture: { name: ['enum', Object.keys(GESTURES)], side: ['enum', ['left', 'right', 'both'], 'right'] },
+  expression: { name: ['enum', Object.keys(EXPR)], duration_ms: ['num', 300, 10000, 3000] },
+  speak: { text: ['str', 240] },
+  hand_pose: { side: ['enum', ['left', 'right', 'both'], 'right'], pose: ['enum', ['open', 'relaxed', 'close', 'pinch', 'point']] },
+  arm_pose: { side: ['enum', ['left', 'right'], 'right'], shoulder_pitch: ['num', -60, 180, 0], shoulder_roll: ['num', -10, 120, 8], elbow: ['num', 0, 145, 12], hold_ms: ['num', 0, 6000, 1500] },
+  torso_turn: { yaw: ['num', -40, 40, 0], hold_ms: ['num', 0, 6000, 1500] },
+  walk_in_place: { steps: ['num', 2, 24, 8] },
+  pick_up: { object: ['enum', OBJ_NAMES] },
+  place: { target: ['enum', PAD_NAMES] },
+  reach: { object: ['enum', OBJ_NAMES] },
+  wait: { ms: ['num', 0, 8000, 600] },
+  reset_pose: {},
+  stop: {}
+};
+function validatePlan(raw) {
+  const actions = [], errors = [], warnings = [];
+  const arr = Array.isArray(raw) ? raw : raw && Array.isArray(raw.actions) ? raw.actions : null;
+  if (!arr) { errors.push('The plan had no list of actions.'); return { actions, errors, warnings }; }
+  if (arr.length > 10) warnings.push(`Trimmed the plan from ${arr.length} to 10 actions.`);
+  arr.slice(0, 10).forEach((a, i) => {
+    const n = `Step ${i + 1}`;
+    if (!a || typeof a !== 'object') { errors.push(`${n} isn't an action.`); return; }
+    const sch = SCHEMA[a.type];
+    if (!sch) { errors.push(`${n}: “${String(a.type).slice(0, 30)}” isn't a known action.`); return; }
+    const v = { type: a.type }; let bad = false;
+    for (const [k, spec] of Object.entries(sch)) {
+      let val = a[k];
+      if (spec[0] === 'num') {
+        if (val === undefined || val === null || val === '') val = spec[3];
+        val = Number(val);
+        if (!Number.isFinite(val)) { errors.push(`${n}: ${k} must be a number.`); bad = true; continue; }
+        if (val < spec[1] || val > spec[2]) { const cv = clamp(val, spec[1], spec[2]); warnings.push(`${n}: ${k} ${Math.round(val)} clamped to ${cv}.`); val = cv; }
+        v[k] = val;
+      } else if (spec[0] === 'enum') {
+        if ((val === undefined || val === null) && spec[2] !== undefined) val = spec[2];
+        if (!spec[1].includes(val)) { errors.push(`${n}: ${k} “${String(val).slice(0, 24)}” isn't allowed.`); bad = true; } else v[k] = val;
+      } else if (spec[0] === 'str') {
+        if (typeof val !== 'string' || !val.trim()) { errors.push(`${n}: ${k} must be text.`); bad = true; } else v[k] = val.trim().slice(0, spec[1]);
+      }
+    }
+    if (a.wait === false) v.wait = false;
+    if (!bad) actions.push(v);
+  });
+  return { actions, errors, warnings };
+}
+
+/* ---------------- planners ---------------- */
+function localPlan(text) {
+  const t = text.toLowerCase().replace(/[’']/g, "'");
+  const clauses = t.split(/\s*(?:,|;|\.|!|\?|\band then\b|\bthen\b|\bafter that\b|\band\b)\s*/).map(s => s.trim()).filter(Boolean);
+  const actions = [], unknown = [];
+  const objIn = s => /\b(red|cube|block)\b/.test(s) ? 'red_cube' : /\b(blue|cylinder|can)\b/.test(s) ? 'blue_cylinder' : /\b(sphere|ball|far)\b/.test(s) ? 'far_sphere' : null;
+  const padIn = s => /\bgreen\b/.test(s) ? 'green_pad' : /\b(amber|orange|yellow)\b/.test(s) ? 'amber_pad' : null;
+  const sideIn = (s, d = 'right') => /\bboth\b|\bhands up\b|\barms up\b/.test(s) ? 'both' : /\bleft\b/.test(s) ? 'left' : /\bright\b/.test(s) ? 'right' : d;
+  const num = (s, d) => { const m = s.match(/\b(\d{1,2})\b/); return m ? +m[1] : d; };
+  for (const c of clauses) {
+    let m;
+    if (/\b(stop|freeze|halt)\b/.test(c)) actions.push({ type: 'stop' });
+    else if (/\b(reset|rest pose|neutral|stand normally|relax)\b/.test(c)) actions.push({ type: 'reset_pose' });
+    else if ((m = c.match(/^(?:please\s+)?(?:say|tell (?:me|us)|speak)\s+(.+)/))) actions.push({ type: 'speak', text: m[1].replace(/^["“]|["”]$/g, '').replace(/^\w/, ch => ch.toUpperCase()) });
+    else if (/\b(introduce yourself|who are you)\b/.test(c)) actions.push({ type: 'gesture', name: 'wave', side: 'right', wait: false }, { type: 'speak', text: "I'm HUMANOID X, a simulated humanoid. I can look around, gesture, follow you and move objects on this bench." });
+    else if (/\b(hello|hi|hey|greet|good morning)\b/.test(c)) actions.push({ type: 'gesture', name: 'wave', side: sideIn(c), wait: false }, { type: 'speak', text: "Hello! I'm HUMANOID X." });
+    else if (/\b(pick|grab|take|lift)\b/.test(c) && objIn(c)) actions.push({ type: 'pick_up', object: objIn(c) });
+    else if (/\b(place|put|set|drop|move|bring|carry)\b/.test(c) && padIn(c)) {
+      const o = objIn(c);
+      if (o && !actions.some(a => a.type === 'pick_up')) actions.push({ type: 'pick_up', object: o });
+      actions.push({ type: 'place', target: padIn(c) });
+    }
+    else if (/\b(reach|touch)\b/.test(c) && objIn(c)) actions.push({ type: 'reach', object: objIn(c) });
+    else if (/\blook at (me|the camera|camera|us)\b/.test(c)) actions.push({ type: 'look_at', target: 'camera' });
+    else if (/\blook at\b/.test(c) && (objIn(c) || padIn(c))) actions.push({ type: 'look_at', target: objIn(c) || padIn(c) });
+    else if (/\blook around\b/.test(c)) actions.push({ type: 'gesture', name: 'look_around' });
+    else if (/\b(look|glance|turn your head|face)\b/.test(c) && /\b(forward|ahead|straight|center)\b/.test(c)) actions.push({ type: 'recenter_head' });
+    else if (/\b(look|glance|turn your head|eyes)\b/.test(c) && /\b(left|right|up|down)\b/.test(c)) {
+      const y = /\bleft\b/.test(c) ? 50 : /\bright\b/.test(c) ? -50 : 0, p = /\bup\b/.test(c) ? 25 : /\bdown\b/.test(c) ? -25 : 0;
+      actions.push({ type: 'head_look', yaw: y, pitch: p, hold_ms: 800 });
+    }
+    else if (/\bwave\b/.test(c)) actions.push({ type: 'gesture', name: 'wave', side: sideIn(c) });
+    else if (/\b(raise|lift|put up|hold up)\b.*\b(hand|arm)s?\b|\b(hands|arms|hand) up\b/.test(c)) actions.push({ type: 'gesture', name: 'raise_hand', side: sideIn(c) });
+    else if (/\bpoint\b/.test(c)) actions.push({ type: 'gesture', name: 'point', side: sideIn(c) });
+    else if (/\bnod\b|\bsay yes\b/.test(c)) actions.push({ type: 'gesture', name: 'nod' });
+    else if (/\bshake\b.*\bhead\b|\bsay no\b/.test(c)) actions.push({ type: 'gesture', name: 'shake_head' });
+    else if (/\bbow\b/.test(c)) actions.push({ type: 'gesture', name: 'bow' });
+    else if (/\bshrug\b/.test(c)) actions.push({ type: 'gesture', name: 'shrug' });
+    else if (/\b(think|ponder|consider)\b/.test(c)) actions.push({ type: 'gesture', name: 'think', side: sideIn(c) });
+    else if (/\b(celebrate|cheer|hooray|victory|dance)\b/.test(c)) actions.push({ type: 'gesture', name: 'celebrate' });
+    else if (/\b(walk|march|step|steps)\b/.test(c)) actions.push({ type: 'walk_in_place', steps: num(c, 8) });
+    else if (/\b(turn|rotate|twist)\b/.test(c) && /\b(left|right)\b/.test(c)) actions.push({ type: 'torso_turn', yaw: /\bleft\b/.test(c) ? 30 : -30, hold_ms: 1200 });
+    else if (/\bopen\b.*\bhands?\b/.test(c)) actions.push({ type: 'hand_pose', side: sideIn(c, 'both'), pose: 'open' });
+    else if (/\b(close|clench|fist|grip)\b/.test(c)) actions.push({ type: 'hand_pose', side: sideIn(c, 'both'), pose: 'close' });
+    else if (/\bpinch\b/.test(c)) actions.push({ type: 'hand_pose', side: sideIn(c), pose: 'pinch' });
+    else if (/\b(curious|tilt)\b/.test(c)) actions.push({ type: 'gesture', name: 'curious_tilt' });
+    else if (/\b(smile|happy)\b/.test(c)) actions.push({ type: 'expression', name: 'happy', duration_ms: 3000 });
+    else if (/\b(surprised?|shocked|wow)\b/.test(c)) actions.push({ type: 'expression', name: 'surprised', duration_ms: 2500 });
+    else if (/\b(sad|worried|concerned)\b/.test(c)) actions.push({ type: 'expression', name: 'concerned', duration_ms: 3000 });
+    else if (/\b(focus|serious)\b/.test(c)) actions.push({ type: 'expression', name: 'focused', duration_ms: 3000 });
+    else if (/\bwait\b/.test(c)) actions.push({ type: 'wait', ms: num(c, 1) * 1000 });
+    else if (/^(it|the|a|me|please|now|go|ok|okay|your|for \d+ steps?)$/.test(c)) { /* filler */ }
+    else unknown.push(c);
+  }
+  return { actions, unknown, say: '' };
+}
+let sampleFn = null, aiOn = false;
+async function aiPlan(text) {
+  const heldNow = Object.entries(held).filter(([, v]) => v).map(([S, v]) => `${sideName(S)} hand holds ${v}`).join('; ') || 'hands are empty';
+  const prompt = `You are the motion planner for HUMANOID X, a simulated humanoid robot. Convert the user's command into a short JSON plan.
+Respond with ONLY a JSON object, no prose and no code fences: {"say": string, "actions": [ ... ]}
+"say" is an optional one-sentence spoken reply (empty string if none). Use at most 8 actions, executed in order.
+Allowed actions (exact field names, numbers in degrees or milliseconds):
+{"type":"head_look","yaw":-80..80,"pitch":-35..35,"hold_ms":0..6000}  yaw>0 is the robot's left, pitch>0 is up
+{"type":"look_at","target":"camera|red_cube|blue_cylinder|far_sphere|green_pad|amber_pad","hold_ms":0..6000}
+{"type":"recenter_head"}
+{"type":"gesture","name":"wave|raise_hand|point|think|nod|shake_head|bow|shrug|celebrate|look_around|curious_tilt","side":"left|right|both"}
+{"type":"expression","name":"neutral|happy|curious|surprised|thinking|concerned|focused|error","duration_ms":300..10000}
+{"type":"speak","text":"max 240 chars"}
+{"type":"hand_pose","side":"left|right|both","pose":"open|relaxed|close|pinch|point"}
+{"type":"arm_pose","side":"left|right","shoulder_pitch":-60..180,"shoulder_roll":-10..120,"elbow":0..145,"hold_ms":0..6000}
+{"type":"torso_turn","yaw":-40..40,"hold_ms":0..6000}
+{"type":"walk_in_place","steps":2..24}
+{"type":"pick_up","object":"red_cube|blue_cylinder|far_sphere"}
+{"type":"place","target":"green_pad|amber_pad"}   (places whatever is held)
+{"type":"reach","object":"red_cube|blue_cylinder|far_sphere"}
+{"type":"wait","ms":0..8000}
+{"type":"reset_pose"}
+Any action may include "wait": false to start it without waiting (useful for a gesture while speaking).
+Scene: a bench in front of the robot. red_cube is on the robot's right, blue_cylinder on its left, far_sphere at the back edge (likely out of reach). green_pad is in the center, amber_pad on the robot's left. Current state: ${heldNow}.
+"Left" and "right" mean the robot's own left and right. If the request is impossible or unsafe, return an empty actions list and explain briefly in "say". Never invent action types.
+User command: ${JSON.stringify(text)}`;
+  return sampleFn.json(prompt, { modelTier: 'quick', cache: false });
+}
+(async function initSample() {
+  const notePl = $('#plannerNote'), tog = $('#aiToggle');
+  try { sampleFn = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch (e) { sampleFn = null; }
+  if (sampleFn) {
+    tog.disabled = false; tog.checked = true; aiOn = true;
+    notePl.textContent = 'Claude turns your words into actions, using your own Claude usage. The built-in parser takes over if Claude is unavailable.';
+  } else {
+    notePl.textContent = 'Using the built-in command parser. Claude planning isn\u2019t available in this view.';
+  }
+  tog.addEventListener('change', () => { aiOn = tog.checked; notePl.textContent = aiOn ? 'Claude turns your words into actions, using your own Claude usage.' : 'Using the built-in command parser.'; });
+})();
+
+let commandBusy = false;
+async function submitCommand(text) {
+  text = (text || '').trim(); if (!text) return;
+  if (estop) { toast('Emergency stop is on. Tap Resume first.'); return; }
+  if (commandBusy) { toast('Still planning the last command.'); return; }
+  commandBusy = true; $('#sendBtn').disabled = true;
+  logEvent('command', text);
+  cancelPlan();
+  setState('THINKING', 'planning');
+  setExpression('thinking');
+  let planned = null, planner = 'local';
+  try {
+    if (aiOn && sampleFn) {
+      try { planned = await aiPlan(text); planner = 'Claude'; }
+      catch (e) {
+        logEvent('planner', `Claude planner unavailable (${(e && e.code) || (e && e.message) || 'error'}), used the built-in parser`, true);
+        if (e && e.code === 'not_granted') { aiOn = false; $('#aiToggle').checked = false; $('#plannerNote').textContent = 'Claude planning was declined, so the built-in parser is in use.'; }
+      }
+    }
+    if (!planned || typeof planned !== 'object') { planned = localPlan(text); planner = 'local'; }
+    if (estop) return;
+    const v = validatePlan(planned);
+    if (typeof planned.say === 'string' && planned.say.trim() && !v.actions.some(a => a.type === 'speak')) v.actions.unshift({ type: 'speak', text: planned.say.trim().slice(0, 240), wait: false });
+    renderValidation(v, planner, planned.unknown);
+    setExpression('neutral');
+    if (!v.actions.length) {
+      setState('ERROR', 'nothing to do');
+      setExpression('concerned', 2500);
+      await speak((typeof planned.say === 'string' && planned.say) || "I don't know how to do that yet. Try asking me to wave, look left, or pick up the red cube.");
+      if (robotState === 'ERROR') setState('IDLE');
+      return;
+    }
+    logEvent('plan', `${planner === 'local' ? 'Built-in parser' : planner} planned ${v.actions.length} action${v.actions.length > 1 ? 's' : ''}`);
+    runPlan(v.actions, { planner });
+  } finally { commandBusy = false; $('#sendBtn').disabled = false; }
+}
+function runDirect(actions) {
+  if (estop) { toast('Emergency stop is on. Tap Resume first.'); return; }
+  const v = validatePlan(actions); renderValidation(v, 'Direct');
+  if (v.actions.length) runPlan(v.actions, { planner: 'direct' });
+}
+
+/* ---------------- plan UI ---------------- */
+const ACTION_LABEL = {
+  head_look: a => ['Look', `${a.yaw > 0 ? 'left' : a.yaw < 0 ? 'right' : 'center'} ${Math.abs(Math.round(a.yaw))}°, ${a.pitch > 0 ? 'up' : a.pitch < 0 ? 'down' : 'level'} ${Math.abs(Math.round(a.pitch))}°`],
+  look_at: a => ['Look at', a.target.replace(/_/g, ' ')],
+  recenter_head: () => ['Recenter head', ''],
+  gesture: a => ['Gesture', a.name.replace(/_/g, ' ') + (GESTURES[a.name].sided ? (a.side === 'both' ? ', both arms' : `, ${a.side} arm`) : '')],
+  expression: a => ['Expression', a.name],
+  speak: a => ['Say', `“${a.text}”`],
+  hand_pose: a => ['Hand pose', `${a.pose}, ${a.side}`],
+  arm_pose: a => ['Arm pose', `${a.side}: raise ${Math.round(a.shoulder_pitch)}°, out ${Math.round(a.shoulder_roll)}°, elbow ${Math.round(a.elbow)}°`],
+  torso_turn: a => ['Turn torso', `${a.yaw > 0 ? 'left' : 'right'} ${Math.abs(Math.round(a.yaw))}°`],
+  walk_in_place: a => ['Walk in place', `${Math.round(a.steps)} steps`],
+  pick_up: a => ['Pick up', OBJ[a.object].label],
+  place: a => ['Place on', PADS[a.target].label],
+  reach: a => ['Reach', OBJ[a.object].label],
+  wait: a => ['Wait', `${(a.ms / 1000).toFixed(1)} s`],
+  reset_pose: () => ['Return to rest pose', ''],
+  stop: () => ['Stop', '']
+};
+function renderPlan() {
+  const ol = $('#plan'); ol.textContent = '';
+  if (!currentPlan || !currentPlan.items.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No plan yet. Run a command or tap a suggestion.'; ol.append(li); return; }
+  for (const it of currentPlan.items) {
+    const [what, args] = ACTION_LABEL[it.a.type](it.a);
+    const li = document.createElement('li'); li.dataset.s = it.status;
+    const top = document.createElement('div'); top.className = 'top';
+    const w = document.createElement('span'); w.className = 'what'; w.textContent = what + (it.a.wait === false ? ' (in parallel)' : '');
+    const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = it.status;
+    top.append(w, pill); li.append(top);
+    if (args) { const a = document.createElement('div'); a.className = 'args'; a.textContent = args; li.append(a); }
+    if (it.note) { const s = document.createElement('div'); s.className = 'sub'; s.textContent = it.note; li.append(s); }
+    ol.append(li);
+  }
+}
+function renderValidation(v, planner, unknown) {
+  const p = $('#validation'); p.textContent = '';
+  const ok = document.createElement('span');
+  const who = planner === 'local' ? 'the built-in parser' : planner === 'Direct' ? 'direct control' : planner;
+  ok.textContent = `Planned by ${who}. Safety check: ${v.actions.length} accepted${v.errors.length ? `, ${v.errors.length} rejected` : ''}${v.warnings.length ? `, ${v.warnings.length} clamped` : ''}.`;
+  p.append(ok);
+  for (const e of [...v.errors, ...(Array.isArray(unknown) ? unknown : []).map(u => `Didn't understand “${u}”.`)]) { const s = document.createElement('div'); s.className = 'bad'; s.textContent = e; p.append(s); }
+  for (const w of v.warnings) { const s = document.createElement('div'); s.textContent = w; p.append(s); }
+}
+
+/* ---------------- camera orbit ---------------- */
+const VIEWS = {
+  hero: { target: [0, 1.12, 0.2], theta: 0.5, phi: 1.36, r: 3.6 },
+  front: { target: [0, 1.0, 0.1], theta: 0, phi: 1.5, r: 3.9 },
+  side: { target: [0, 1.05, 0.15], theta: 1.57, phi: 1.45, r: 3.4 },
+  face: { target: [0, 1.72, 0], theta: 0.22, phi: 1.5, r: 0.85 },
+  bench: { target: [0, 1.08, 0.32], theta: 0.35, phi: 1.05, r: 1.5 }
+};
+const orbit = { target: new THREE.Vector3(0, 1.12, 0.2), theta: 0.5, phi: 1.36, r: 3.6, tween: null };
+function fitScale() { return camera.aspect < 0.75 ? 1.25 : camera.aspect < 1 ? 1.1 : 1; }
+function setView(name, instant) {
+  const v = VIEWS[name]; $$('.views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+  const from = { target: orbit.target.clone(), theta: orbit.theta, phi: orbit.phi, r: orbit.r };
+  const to = { target: new THREE.Vector3(...v.target), theta: v.theta, phi: v.phi, r: v.r * fitScale() };
+  if (reducedMotion || instant) { orbit.target.copy(to.target); orbit.theta = to.theta; orbit.phi = to.phi; orbit.r = to.r; orbit.tween = null; return; }
+  orbit.tween = { from, to, t: 0 };
+}
+function updateOrbit(dt) {
+  if (orbit.tween) {
+    const tw = orbit.tween; tw.t = Math.min(1, tw.t + dt / 0.8); const u = ease(tw.t);
+    orbit.target.lerpVectors(tw.from.target, tw.to.target, u);
+    orbit.theta = lerp(tw.from.theta, tw.to.theta, u); orbit.phi = lerp(tw.from.phi, tw.to.phi, u); orbit.r = lerp(tw.from.r, tw.to.r, u);
+    if (tw.t >= 1) orbit.tween = null;
+  }
+  const sp = Math.sin(orbit.phi);
+  camera.position.set(orbit.target.x + orbit.r * sp * Math.sin(orbit.theta), orbit.target.y + orbit.r * Math.cos(orbit.phi), orbit.target.z + orbit.r * sp * Math.cos(orbit.theta));
+  camera.lookAt(orbit.target);
+}
+const pointers = new Map(); let pinch0 = 0, r0 = 0;
+function updateNdc(e) {
+  const r = canvas.getBoundingClientRect();
+  trk.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  trk.lastPointer = performance.now();
+}
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  orbit.tween = null; updateNdc(e);
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); r0 = orbit.r; }
+});
+canvas.addEventListener('pointermove', e => {
+  updateNdc(e);
+  const p = pointers.get(e.pointerId); if (!p) return;
+  if (pointers.size === 1) {
+    orbit.theta -= (e.clientX - p.x) * 0.008;
+    orbit.phi = clamp(orbit.phi - (e.clientY - p.y) * 0.006, 0.25, 1.62);
+  }
+  p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0 && d > 0) orbit.r = clamp(r0 * pinch0 / d, 0.6, 7); }
+});
+const endPtr = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; };
+canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('wheel', e => { e.preventDefault(); orbit.tween = null; orbit.r = clamp(orbit.r * Math.exp(e.deltaY * 0.001), 0.6, 7); }, { passive: false });
+
+function resize() {
+  const w = stageEl.clientWidth, h = stageEl.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+resize();
+setView('hero', true);
+if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl); else window.addEventListener('resize', resize);
+
+/* ---------------- skeleton overlay ---------------- */
+const skelNodes = ACTUATED.map(n => nodes[n]);
+const skelPairs = [];
+for (const n of skelNodes) { let p = n.parent; while (p && !skelNodes.includes(p)) p = p.parent; if (p) skelPairs.push([p, n]); }
+const skelGeo = new THREE.BufferGeometry(); skelGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(skelPairs.length * 6), 3));
+const skelPtsGeo = new THREE.BufferGeometry(); skelPtsGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(skelNodes.length * 3), 3));
+const skel = new THREE.Group();
+const skelLines = new THREE.LineSegments(skelGeo, new THREE.LineBasicMaterial({ color: 0x2fbf8a, depthTest: false, transparent: true }));
+const skelPts = new THREE.Points(skelPtsGeo, new THREE.PointsMaterial({ color: 0xe0a33a, size: 5, sizeAttenuation: false, depthTest: false, transparent: true }));
+[skelLines, skelPts].forEach(o => { o.frustumCulled = false; o.renderOrder = 10; skel.add(o); });
+skel.visible = false; scene.add(skel);
+function updateSkeleton() {
+  const a = skelGeo.attributes.position.array, b = skelPtsGeo.attributes.position.array;
+  skelPairs.forEach(([p, n], i) => { p.getWorldPosition(_v1); n.getWorldPosition(_v2); a.set([_v1.x, _v1.y, _v1.z, _v2.x, _v2.y, _v2.z], i * 6); });
+  skelNodes.forEach((n, i) => { n.getWorldPosition(_v1); b.set([_v1.x, _v1.y, _v1.z], i * 3); });
+  skelGeo.attributes.position.needsUpdate = true; skelPtsGeo.attributes.position.needsUpdate = true;
+}
+
+/* ---------------- UI wiring ---------------- */
+$$('.tabs button').forEach(b => b.addEventListener('click', () => {
+  activeTab = b.dataset.tab;
+  $$('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  $$('.pane').forEach(p => { p.hidden = p.id !== `pane-${activeTab}`; });
+  if (activeTab === 'system') { renderLog(); updateTelemetry(); }
+  if (activeTab === 'body') renderSliders();
+  if (activeTab === 'tracking') updateTrackUI();
+}));
+$$('.views button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+$('#estop').addEventListener('click', () => { if (estop) resume(); else emergencyStop(); });
+$('#sendBtn').addEventListener('click', () => submitCommand($('#cmdInput').value));
+$('#cmdInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitCommand(e.target.value); } });
+const CHIPS = [
+  ['Wave hello', 'Wave hello'],
+  ['Look left, then right', 'Look left, then look right'],
+  ['Red cube to the green pad', 'Pick up the red cube and place it on the green pad'],
+  ['Blue cylinder to the amber pad', 'Move the blue cylinder to the amber pad'],
+  ['Think about it', 'Think about it'],
+  ['Walk in place', 'Walk in place for 8 steps'],
+  ['Celebrate', 'Raise both hands, then celebrate'],
+  ['Point and speak', 'Point forward, then say target acquired'],
+  ['Reach the far sphere (fails)', 'Reach for the far sphere', true]
+];
+for (const [label, cmdText, fail] of CHIPS) {
+  const b = document.createElement('button'); b.className = 'chip' + (fail ? ' fail' : ''); b.textContent = label;
+  b.addEventListener('click', () => { $('#cmdInput').value = cmdText; submitCommand(cmdText); });
+  $('#chips').append(b);
+}
+$('#resetBench').addEventListener('click', () => { cancelPlan(); for (const S of ['L', 'R']) { detach(S); releaseArm(S); releaseHand(S); } releaseGaze(); resetBench(); if (!estop) setState('IDLE'); });
+$('#resetPose').addEventListener('click', () => runDirect([{ type: 'reset_pose' }]));
+
+let gestureSide = 'right', handSide = 'both';
+function seg(id, cb) { $$(`#${id} button`).forEach(b => b.addEventListener('click', () => { $$(`#${id} button`).forEach(x => x.setAttribute('aria-pressed', String(x === b))); cb(b.dataset.v); })); }
+seg('gestureSide', v => { gestureSide = v; }); seg('handSide', v => { handSide = v; });
+const GESTURE_BTNS = [['wave', 'Wave'], ['raise_hand', 'Raise hand'], ['point', 'Point'], ['think', 'Think'], ['nod', 'Nod yes'], ['shake_head', 'Shake no'], ['bow', 'Bow'], ['shrug', 'Shrug'], ['celebrate', 'Celebrate'], ['look_around', 'Look around'], ['curious_tilt', 'Curious tilt'], ['walk', 'Walk in place']];
+for (const [g, label] of GESTURE_BTNS) {
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = label;
+  b.addEventListener('click', () => runDirect([g === 'walk' ? { type: 'walk_in_place', steps: 8 } : { type: 'gesture', name: g, side: gestureSide }]));
+  $('#gestures').append(b);
+}
+for (const p of ['open', 'relaxed', 'close', 'pinch', 'point']) {
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = p[0].toUpperCase() + p.slice(1);
+  b.addEventListener('click', () => runDirect([{ type: 'hand_pose', side: handSide, pose: p }]));
+  $('#hands').append(b);
+}
+for (const e of Object.keys(EXPR)) {
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = e[0].toUpperCase() + e.slice(1);
+  b.addEventListener('click', () => runDirect([{ type: 'expression', name: e, duration_ms: 4000 }]));
+  $('#exprs').append(b);
+}
+const groups = [...new Set(JLIST.map(j => j.group))];
+for (const g of groups) { const o = document.createElement('option'); o.value = g; o.textContent = g; $('#jointGroup').append(o); }
+$('#jointGroup').addEventListener('change', renderSliders);
+const sliderEls = new Map();
+const OWNER_LABEL = { rest: 'rest pose', command: 'command', tracking: 'tracking', expression: 'expression', blink: 'blink', speech: 'speech', manual: 'manual', boot: 'start-up' };
+function renderSliders() {
+  const box = $('#sliders'); box.textContent = ''; sliderEls.clear();
+  for (const j of JLIST.filter(x => x.group === $('#jointGroup').value)) {
+    const wrap = document.createElement('div'); wrap.className = 'slider';
+    const lab = document.createElement('label'); lab.textContent = j.label; lab.htmlFor = `s_${j.id}`;
+    const out = document.createElement('output');
+    const inp = document.createElement('input'); inp.type = 'range'; inp.id = `s_${j.id}`; inp.min = j.min; inp.max = j.max; inp.step = j.unit === 'mm' ? 0.5 : 1; inp.value = cur[j.id];
+    inp.addEventListener('input', () => { manual.set(j.id, +inp.value); });
+    const own = document.createElement('div'); own.className = 'own';
+    wrap.append(lab, out, inp, own); box.append(wrap);
+    sliderEls.set(j.id, { inp, out, own });
+  }
+  updateSliders();
+}
+function updateSliders() {
+  for (const [id, el] of sliderEls) {
+    const j = JD[id];
+    if (document.activeElement !== el.inp) el.inp.value = cur[id];
+    el.out.textContent = `${cur[id].toFixed(j.unit === 'mm' ? 1 : 0)}${j.unit === '°' ? '°' : ' ' + j.unit}  (${j.min} to ${j.max})`;
+    el.own.textContent = ''; el.own.append('Controlled by ');
+    const b = document.createElement('b'); b.textContent = OWNER_LABEL[owner[id]] || String(owner[id]).replace(/_/g, ' '); el.own.append(b);
+  }
+}
+$('#releaseManual').addEventListener('click', () => { manual.clear(); toast('Manual control released.'); });
+
+seg('trackMode', v => {
+  if (trk.mode === 'camera' && v !== 'camera') stopCamera();
+  trk.mode = v; trk.lastSeen = 0;
+  logEvent('tracking', `Mode set to ${v}`);
+  if (v === 'camera') startCamera();
+  else if (v === 'pointer') setTrackState('SEARCHING', 'Hover or touch the 3D view.');
+  updateTrackUI();
+});
+const bindRange = (id, fn, fmt) => { const el = $(`#${id}`), out = $(`#${id}Out`); el.addEventListener('input', () => { fn(+el.value); out.textContent = fmt(+el.value); }); };
+bindRange('sens', v => { trk.sens = v; }, v => `${v.toFixed(1)}×`);
+bindRange('smooth', v => { trk.smooth = v; }, v => v.toFixed(2));
+bindRange('maxYaw', v => { trk.maxYaw = v; }, v => `${v}°`);
+$('#recenter').addEventListener('click', () => { trk.yaw = 0; trk.pitch = 0; runDirect([{ type: 'recenter_head' }]); });
+const TRACK_LABEL = { IDLE: 'Off', CAMERA_INITIALIZING: 'Starting camera', SEARCHING: 'Searching', TRACKING: 'Tracking', TARGET_LOST: 'Target lost', RETURNING: 'Returning to center', ERROR: 'Camera unavailable' };
+function updateTrackUI() {
+  $('#trackState').textContent = TRACK_LABEL[trk.state] || trk.state;
+  $('#trackMsg').textContent = trk.msg;
+  $('#confBar').style.width = `${Math.round(trk.conf * 100)}%`;
+  const f = v => `${v >= 0 ? '+' : ''}${Math.round(v)}°`;
+  $('#tTarget').textContent = trk.w > 0 ? `yaw ${f(trk.yaw)}, pitch ${f(trk.pitch)}` : '–';
+  $('#tHead').textContent = `yaw ${f(cur.neck_yaw + cur.head_yaw)}, pitch ${f(cur.neck_pitch + cur.head_pitch)}`;
+  $('#tEyes').textContent = `yaw ${f(cur.eye_yaw)}, pitch ${f(cur.eye_pitch)}`;
+}
+
+$('#optSkel').addEventListener('change', e => { skel.visible = e.target.checked; });
+$('#optShadows').addEventListener('change', e => { key.castShadow = e.target.checked; });
+$('#optSaver').addEventListener('change', e => { pixelRatio = e.target.checked ? 1 : Math.min(window.devicePixelRatio || 1, 2); renderer.setPixelRatio(pixelRatio); resize(); });
+$('#optVoice').addEventListener('change', e => { voiceOn = e.target.checked; if (!voiceOn) stopSpeechOnly(); });
+function stopSpeechOnly() { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (err) { } }
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  const mic = $('#micBtn'); mic.hidden = false;
+  mic.addEventListener('click', () => {
+    if (estop) { toast('Emergency stop is on. Tap Resume first.'); return; }
+    let rec;
+    try { rec = new SR(); } catch (e) { toast('Voice input isn\u2019t available here.'); return; }
+    rec.lang = navigator.language || 'en-US'; rec.interimResults = false; rec.maxAlternatives = 1;
+    setState('LISTENING'); mic.disabled = true;
+    rec.onresult = ev => { const text = ev.results[0][0].transcript; $('#cmdInput').value = text; setState('IDLE'); submitCommand(text); };
+    rec.onerror = ev => { toast(ev.error === 'not-allowed' ? 'Microphone access was blocked in this view.' : 'Didn\u2019t catch that. Try again.'); if (robotState === 'LISTENING') setState('IDLE'); };
+    rec.onend = () => { mic.disabled = false; if (robotState === 'LISTENING') setState('IDLE'); };
+    try { rec.start(); } catch (e) { mic.disabled = false; setState('IDLE'); }
+  });
+}
+
+const TEL = {};
+['Frame rate', 'Frame time', 'Draw calls', 'Triangles', 'Joint channels', 'Moving parts', 'Active clips', 'Commanded joints', 'Robot state', 'Tracking', 'Holding'].forEach(k => {
+  const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = '–';
+  $('#telemetry').append(dt, dd); TEL[k] = dd;
+});
+let fpsEMA = 60, msEMA = 4;
+function updateTelemetry() {
+  TEL['Frame rate'].textContent = `${fpsEMA.toFixed(0)} fps`;
+  TEL['Frame time'].textContent = `${msEMA.toFixed(1)} ms`;
+  TEL['Draw calls'].textContent = renderer.info.render.calls;
+  TEL['Triangles'].textContent = renderer.info.render.triangles.toLocaleString();
+  TEL['Joint channels'].textContent = JLIST.length;
+  TEL['Moving parts'].textContent = ACTUATED.length;
+  TEL['Active clips'].textContent = playing.length ? playing.map(p => p.clip.name.replace(/_/g, ' ')).join(', ') : 'none';
+  TEL['Commanded joints'].textContent = cmd.size;
+  TEL['Robot state'].textContent = STATE_LABEL[robotState];
+  TEL['Tracking'].textContent = TRACK_LABEL[trk.state] || trk.state;
+  TEL['Holding'].textContent = Object.values(held).filter(Boolean).map(n => OBJ[n].label).join(', ') || 'nothing';
+}
+
+/* ---------------- companion bridge (optional, local use only) ---------------- */
+// Open this file as  humanoid-x-live.html?bridge=ws://127.0.0.1:8765/robot/ws&token=YOUR_TOKEN
+// Humanoid Companion sends validated action plans. This page validates them again and reports what really happened.
+(function companionBridge() {
+  let qs; try { qs = new URLSearchParams(location.search); } catch (e) { return; }
+  const url = qs.get('bridge'); if (!url) return;
+  if (!/^wss?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?\//.test(url)) { logEvent('bridge', 'Bridge refused: only loopback addresses are allowed', true); return; }
+  const token = qs.get('token') || '';
+  let ws = null, delay = 1000;
+  const simState = () => ({ robot_state: robotState, estop, holding: { left: held.L, right: held.R }, tracking: trk.state });
+  const send = o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
+  function connect() {
+    try { ws = new WebSocket(url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token)); }
+    catch (e) { logEvent('bridge', 'Could not open the companion bridge', true); return; }
+    ws.onopen = () => { delay = 1000; send({ type: 'hello', protocol: 1, name: 'HUMANOID X live simulation', skills: Object.keys(SCHEMA), objects: OBJ_NAMES, pads: PAD_NAMES, state: simState() }); };
+    ws.onmessage = async ev => {
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.type === 'welcome') { logEvent('bridge', 'Connected to Humanoid Companion'); toast('Companion connected'); }
+      else if (m.type === 'estop') { emergencyStop(); send({ type: 'state', state: simState() }); }
+      else if (m.type === 'execute') {
+        const reply = (status, detail, steps) => send({ type: 'result', request_id: m.request_id, status, detail, steps: steps || [], state: simState() });
+        if (estop) { reply('failed', 'Emergency stop is active.'); return; }
+        const v = validatePlan(m.actions);
+        if (v.errors.length || !v.actions.length) { reply('failed', 'Rejected by the simulator: ' + (v.errors.join(' ') || 'no valid actions')); return; }
+        logEvent('bridge', `Companion requested ${v.actions.length} action${v.actions.length > 1 ? 's' : ''}`);
+        renderValidation(v, 'Humanoid Companion');
+        const res = await runPlan(v.actions, { planner: 'companion' });
+        reply(res.status, res.detail, res.steps);
+      }
+    };
+    ws.onclose = () => { logEvent('bridge', `Companion disconnected; retrying in ${Math.round(delay / 1000)} s`); setTimeout(connect, delay); delay = Math.min(delay * 2, 15000); };
+    ws.onerror = () => { };
+  }
+  connect();
+  setInterval(() => send({ type: 'state', state: simState() }), 5000);
+})();
+
+/* ---------------- main loop ---------------- */
+let last = performance.now(), uiTimer = 0;
+logEvent('system', `Robot built: ${JLIST.length} joint channels across ${ACTUATED.length} moving parts`);
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
+  const t = now / 1000, t0 = performance.now();
+  updateOrbit(dt);
+  updateTracking(dt, now);
+  updateClips(dt); updateCmd(dt);
+  evaluate(dt, t);
+  updatePhysics(dt);
+  updateMaterials(dt, t);
+  if (robotState === 'IDLE' && trk.mode === 'off' && !playing.length && !reducedMotion && now - lastActivity > 18000 && !estop) { playClip('Look_Around'); lastActivity = now; }
+  if (skel.visible) { robot.updateMatrixWorld(true); updateSkeleton(); }
+  renderer.render(scene, camera);
+  msEMA = lerp(msEMA, performance.now() - t0, 0.05); fpsEMA = lerp(fpsEMA, 1 / dt, 0.05);
+  uiTimer += dt;
+  if (uiTimer > 0.25) {
+    uiTimer = 0;
+    if (activeTab === 'tracking') updateTrackUI();
+    if (activeTab === 'system') updateTelemetry();
+    if (activeTab === 'body') updateSliders();
+  }
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

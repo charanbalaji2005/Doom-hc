@@ -1,0 +1,1589 @@
+{
+  "name": "HUMANOID X",
+  "version": "1.0",
+  "units": "meters",
+  "height_m": 1.819,
+  "fps": 30,
+  "coordinates": {
+    "blender": "Z up, robot faces -Y, robot's left is +X",
+    "gltf": "Y up, robot faces +Z, robot's left is +X"
+  },
+  "joint_resolution_order": [
+    "rest pose and breathing",
+    "animation clips",
+    "commanded actions",
+    "gaze: commands, then tracking",
+    "additive clips (nod, shake)",
+    "expression and blink",
+    "speech jaw",
+    "manual override",
+    "safety clamp: joint limits, then speed caps"
+  ],
+  "joints": [
+    {
+      "id": "pelvis_h",
+      "group": "Torso",
+      "label": "Pelvis height",
+      "min": -8,
+      "max": 4,
+      "max_speed_per_s": 30,
+      "unit": "cm",
+      "drives": [
+        {
+          "bone": "pelvis",
+          "channel": "translate_y",
+          "gain": 0.01,
+          "offset": 1.0
+        }
+      ]
+    },
+    {
+      "id": "spine_yaw",
+      "group": "Torso",
+      "label": "Waist turn",
+      "min": -40,
+      "max": 40,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "spine",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "spine_pitch",
+      "group": "Torso",
+      "label": "Waist lean",
+      "min": -10,
+      "max": 25,
+      "max_speed_per_s": 60,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "spine",
+          "channel": "rotate_x",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "spine_roll",
+      "group": "Torso",
+      "label": "Waist side bend",
+      "min": -15,
+      "max": 15,
+      "max_speed_per_s": 60,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "spine",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "neck_yaw",
+      "group": "Head",
+      "label": "Neck turn",
+      "min": -70,
+      "max": 70,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "neck",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "neck_pitch",
+      "group": "Head",
+      "label": "Neck tilt",
+      "min": -30,
+      "max": 30,
+      "max_speed_per_s": 180,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "neck",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "head_yaw",
+      "group": "Head",
+      "label": "Head turn",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "head",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "head_pitch",
+      "group": "Head",
+      "label": "Head tilt",
+      "min": -25,
+      "max": 25,
+      "max_speed_per_s": 200,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "head",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "head_roll",
+      "group": "Head",
+      "label": "Head roll",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 120,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "head",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "eye_yaw",
+      "group": "Face",
+      "label": "Eyes left and right",
+      "min": -25,
+      "max": 25,
+      "max_speed_per_s": 900,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "eye_L",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "eye_R",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "eye_pitch",
+      "group": "Face",
+      "label": "Eyes up and down",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 900,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "eye_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "eye_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "lids",
+      "group": "Face",
+      "label": "Eyelids closed",
+      "min": 0,
+      "max": 100,
+      "max_speed_per_s": 1800,
+      "unit": "%",
+      "drives": [
+        {
+          "bone": "lid_L",
+          "channel": "rotate_x",
+          "gain": 0.029500000000000002,
+          "offset": -1.45
+        },
+        {
+          "bone": "lid_R",
+          "channel": "rotate_x",
+          "gain": 0.029500000000000002,
+          "offset": -1.45
+        }
+      ]
+    },
+    {
+      "id": "jaw",
+      "group": "Face",
+      "label": "Jaw",
+      "min": 0,
+      "max": 18,
+      "max_speed_per_s": 300,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "jaw",
+          "channel": "rotate_x",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "brow_raise",
+      "group": "Face",
+      "label": "Brow raise",
+      "min": -3,
+      "max": 6,
+      "max_speed_per_s": 60,
+      "unit": "mm",
+      "drives": [
+        {
+          "bone": "brow_L",
+          "channel": "translate_y",
+          "gain": 0.001,
+          "offset": 0.128
+        },
+        {
+          "bone": "brow_R",
+          "channel": "translate_y",
+          "gain": 0.001,
+          "offset": 0.128
+        }
+      ]
+    },
+    {
+      "id": "brow_tilt",
+      "group": "Face",
+      "label": "Brow tilt",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 200,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "brow_L",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "brow_R",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_pitch_L",
+      "group": "Left arm",
+      "label": "Shoulder raise forward",
+      "min": -60,
+      "max": 180,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_roll_L",
+      "group": "Left arm",
+      "label": "Shoulder raise sideways",
+      "min": -10,
+      "max": 170,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_L",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_yaw_L",
+      "group": "Left arm",
+      "label": "Upper arm twist",
+      "min": -80,
+      "max": 95,
+      "max_speed_per_s": 180,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_L",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "elbow_L",
+      "group": "Left arm",
+      "label": "Elbow bend",
+      "min": 0,
+      "max": 145,
+      "max_speed_per_s": 220,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "elbow_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_roll_L",
+      "group": "Left arm",
+      "label": "Forearm twist",
+      "min": -90,
+      "max": 90,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_L",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_pitch_L",
+      "group": "Left arm",
+      "label": "Wrist bend",
+      "min": -60,
+      "max": 60,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_yaw_L",
+      "group": "Left arm",
+      "label": "Wrist side bend",
+      "min": -25,
+      "max": 25,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_L",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "index_L",
+      "group": "Left hand",
+      "label": "Index finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_L_0_0",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_0_1",
+          "channel": "rotate_z",
+          "gain": -0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_0_2",
+          "channel": "rotate_z",
+          "gain": -0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "middle_L",
+      "group": "Left hand",
+      "label": "Middle finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_L_1_0",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_1_1",
+          "channel": "rotate_z",
+          "gain": -0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_1_2",
+          "channel": "rotate_z",
+          "gain": -0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ring_L",
+      "group": "Left hand",
+      "label": "Ring finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_L_2_0",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_2_1",
+          "channel": "rotate_z",
+          "gain": -0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_2_2",
+          "channel": "rotate_z",
+          "gain": -0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "pinky_L",
+      "group": "Left hand",
+      "label": "Pinky finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_L_3_0",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_3_1",
+          "channel": "rotate_z",
+          "gain": -0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_L_3_2",
+          "channel": "rotate_z",
+          "gain": -0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "thumb_L",
+      "group": "Left hand",
+      "label": "Thumb curl",
+      "min": 0,
+      "max": 70,
+      "max_speed_per_s": 400,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "th_L_0",
+          "channel": "rotate_z",
+          "gain": -0.010471975511965976,
+          "offset": 0
+        },
+        {
+          "bone": "th_L_1",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "th_L_2",
+          "channel": "rotate_z",
+          "gain": -0.015707963267948967,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_pitch_L",
+      "group": "Left leg",
+      "label": "Hip raise forward",
+      "min": -30,
+      "max": 100,
+      "max_speed_per_s": 120,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_roll_L",
+      "group": "Left leg",
+      "label": "Hip raise sideways",
+      "min": -15,
+      "max": 35,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_L",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_yaw_L",
+      "group": "Left leg",
+      "label": "Hip twist",
+      "min": -30,
+      "max": 30,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_L",
+          "channel": "rotate_y",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "knee_L",
+      "group": "Left leg",
+      "label": "Knee bend",
+      "min": 0,
+      "max": 130,
+      "max_speed_per_s": 200,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "knee_L",
+          "channel": "rotate_x",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ankle_pitch_L",
+      "group": "Left leg",
+      "label": "Ankle toes up",
+      "min": -35,
+      "max": 30,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "ankle_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ankle_roll_L",
+      "group": "Left leg",
+      "label": "Ankle roll",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "ankle_L",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "toe_L",
+      "group": "Left leg",
+      "label": "Toe bend",
+      "min": -10,
+      "max": 40,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "toe_L",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_pitch_R",
+      "group": "Right arm",
+      "label": "Shoulder raise forward",
+      "min": -60,
+      "max": 180,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_roll_R",
+      "group": "Right arm",
+      "label": "Shoulder raise sideways",
+      "min": -10,
+      "max": 170,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_R",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "shoulder_yaw_R",
+      "group": "Right arm",
+      "label": "Upper arm twist",
+      "min": -80,
+      "max": 95,
+      "max_speed_per_s": 180,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "shoulder_R",
+          "channel": "rotate_y",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "elbow_R",
+      "group": "Right arm",
+      "label": "Elbow bend",
+      "min": 0,
+      "max": 145,
+      "max_speed_per_s": 220,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "elbow_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_roll_R",
+      "group": "Right arm",
+      "label": "Forearm twist",
+      "min": -90,
+      "max": 90,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_R",
+          "channel": "rotate_y",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_pitch_R",
+      "group": "Right arm",
+      "label": "Wrist bend",
+      "min": -60,
+      "max": 60,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "wrist_yaw_R",
+      "group": "Right arm",
+      "label": "Wrist side bend",
+      "min": -25,
+      "max": 25,
+      "max_speed_per_s": 240,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "wrist_R",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "index_R",
+      "group": "Right hand",
+      "label": "Index finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_R_0_0",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_0_1",
+          "channel": "rotate_z",
+          "gain": 0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_0_2",
+          "channel": "rotate_z",
+          "gain": 0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "middle_R",
+      "group": "Right hand",
+      "label": "Middle finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_R_1_0",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_1_1",
+          "channel": "rotate_z",
+          "gain": 0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_1_2",
+          "channel": "rotate_z",
+          "gain": 0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ring_R",
+      "group": "Right hand",
+      "label": "Ring finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_R_2_0",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_2_1",
+          "channel": "rotate_z",
+          "gain": 0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_2_2",
+          "channel": "rotate_z",
+          "gain": 0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "pinky_R",
+      "group": "Right hand",
+      "label": "Pinky finger curl",
+      "min": 0,
+      "max": 95,
+      "max_speed_per_s": 500,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "f_R_3_0",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_3_1",
+          "channel": "rotate_z",
+          "gain": 0.019198621771937627,
+          "offset": 0
+        },
+        {
+          "bone": "f_R_3_2",
+          "channel": "rotate_z",
+          "gain": 0.013962634015954637,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "thumb_R",
+      "group": "Right hand",
+      "label": "Thumb curl",
+      "min": 0,
+      "max": 70,
+      "max_speed_per_s": 400,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "th_R_0",
+          "channel": "rotate_z",
+          "gain": 0.010471975511965976,
+          "offset": 0
+        },
+        {
+          "bone": "th_R_1",
+          "channel": "rotate_z",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        },
+        {
+          "bone": "th_R_2",
+          "channel": "rotate_z",
+          "gain": 0.015707963267948967,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_pitch_R",
+      "group": "Right leg",
+      "label": "Hip raise forward",
+      "min": -30,
+      "max": 100,
+      "max_speed_per_s": 120,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_roll_R",
+      "group": "Right leg",
+      "label": "Hip raise sideways",
+      "min": -15,
+      "max": 35,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_R",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "hip_yaw_R",
+      "group": "Right leg",
+      "label": "Hip twist",
+      "min": -30,
+      "max": 30,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "hip_R",
+          "channel": "rotate_y",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "knee_R",
+      "group": "Right leg",
+      "label": "Knee bend",
+      "min": 0,
+      "max": 130,
+      "max_speed_per_s": 200,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "knee_R",
+          "channel": "rotate_x",
+          "gain": 0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ankle_pitch_R",
+      "group": "Right leg",
+      "label": "Ankle toes up",
+      "min": -35,
+      "max": 30,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "ankle_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "ankle_roll_R",
+      "group": "Right leg",
+      "label": "Ankle roll",
+      "min": -20,
+      "max": 20,
+      "max_speed_per_s": 90,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "ankle_R",
+          "channel": "rotate_z",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "toe_R",
+      "group": "Right leg",
+      "label": "Toe bend",
+      "min": -10,
+      "max": 40,
+      "max_speed_per_s": 150,
+      "unit": "deg",
+      "drives": [
+        {
+          "bone": "toe_R",
+          "channel": "rotate_x",
+          "gain": -0.017453292519943295,
+          "offset": 0
+        }
+      ]
+    }
+  ],
+  "neutral_pose": {
+    "lids": 6,
+    "shoulder_roll_L": 7,
+    "shoulder_pitch_L": 3,
+    "elbow_L": 12,
+    "index_L": 14,
+    "middle_L": 18,
+    "ring_L": 22,
+    "pinky_L": 26,
+    "thumb_L": 18,
+    "knee_L": 3,
+    "hip_pitch_L": 1.5,
+    "ankle_pitch_L": 1.5,
+    "shoulder_roll_R": 7,
+    "shoulder_pitch_R": 3,
+    "elbow_R": 12,
+    "index_R": 14,
+    "middle_R": 18,
+    "ring_R": 22,
+    "pinky_R": 26,
+    "thumb_R": 18,
+    "knee_R": 3,
+    "hip_pitch_R": 1.5,
+    "ankle_pitch_R": 1.5
+  },
+  "bones": [
+    {
+      "name": "root",
+      "parent": null
+    },
+    {
+      "name": "pelvis",
+      "parent": "root"
+    },
+    {
+      "name": "spine",
+      "parent": "pelvis"
+    },
+    {
+      "name": "chest",
+      "parent": "spine"
+    },
+    {
+      "name": "neck",
+      "parent": "chest"
+    },
+    {
+      "name": "head",
+      "parent": "neck"
+    },
+    {
+      "name": "eye_L",
+      "parent": "head"
+    },
+    {
+      "name": "lid_L",
+      "parent": "head"
+    },
+    {
+      "name": "brow_L",
+      "parent": "head"
+    },
+    {
+      "name": "eye_R",
+      "parent": "head"
+    },
+    {
+      "name": "lid_R",
+      "parent": "head"
+    },
+    {
+      "name": "brow_R",
+      "parent": "head"
+    },
+    {
+      "name": "mouth",
+      "parent": "head"
+    },
+    {
+      "name": "jaw",
+      "parent": "head"
+    },
+    {
+      "name": "shoulder_L",
+      "parent": "chest"
+    },
+    {
+      "name": "elbow_L",
+      "parent": "shoulder_L"
+    },
+    {
+      "name": "wrist_L",
+      "parent": "elbow_L"
+    },
+    {
+      "name": "f_L_0_0",
+      "parent": "wrist_L"
+    },
+    {
+      "name": "f_L_0_1",
+      "parent": "f_L_0_0"
+    },
+    {
+      "name": "f_L_0_2",
+      "parent": "f_L_0_1"
+    },
+    {
+      "name": "f_L_1_0",
+      "parent": "wrist_L"
+    },
+    {
+      "name": "f_L_1_1",
+      "parent": "f_L_1_0"
+    },
+    {
+      "name": "f_L_1_2",
+      "parent": "f_L_1_1"
+    },
+    {
+      "name": "f_L_2_0",
+      "parent": "wrist_L"
+    },
+    {
+      "name": "f_L_2_1",
+      "parent": "f_L_2_0"
+    },
+    {
+      "name": "f_L_2_2",
+      "parent": "f_L_2_1"
+    },
+    {
+      "name": "f_L_3_0",
+      "parent": "wrist_L"
+    },
+    {
+      "name": "f_L_3_1",
+      "parent": "f_L_3_0"
+    },
+    {
+      "name": "f_L_3_2",
+      "parent": "f_L_3_1"
+    },
+    {
+      "name": "thumb_mount_L",
+      "parent": "wrist_L"
+    },
+    {
+      "name": "th_L_0",
+      "parent": "thumb_mount_L"
+    },
+    {
+      "name": "th_L_1",
+      "parent": "th_L_0"
+    },
+    {
+      "name": "th_L_2",
+      "parent": "th_L_1"
+    },
+    {
+      "name": "shoulder_R",
+      "parent": "chest"
+    },
+    {
+      "name": "elbow_R",
+      "parent": "shoulder_R"
+    },
+    {
+      "name": "wrist_R",
+      "parent": "elbow_R"
+    },
+    {
+      "name": "f_R_0_0",
+      "parent": "wrist_R"
+    },
+    {
+      "name": "f_R_0_1",
+      "parent": "f_R_0_0"
+    },
+    {
+      "name": "f_R_0_2",
+      "parent": "f_R_0_1"
+    },
+    {
+      "name": "f_R_1_0",
+      "parent": "wrist_R"
+    },
+    {
+      "name": "f_R_1_1",
+      "parent": "f_R_1_0"
+    },
+    {
+      "name": "f_R_1_2",
+      "parent": "f_R_1_1"
+    },
+    {
+      "name": "f_R_2_0",
+      "parent": "wrist_R"
+    },
+    {
+      "name": "f_R_2_1",
+      "parent": "f_R_2_0"
+    },
+    {
+      "name": "f_R_2_2",
+      "parent": "f_R_2_1"
+    },
+    {
+      "name": "f_R_3_0",
+      "parent": "wrist_R"
+    },
+    {
+      "name": "f_R_3_1",
+      "parent": "f_R_3_0"
+    },
+    {
+      "name": "f_R_3_2",
+      "parent": "f_R_3_1"
+    },
+    {
+      "name": "thumb_mount_R",
+      "parent": "wrist_R"
+    },
+    {
+      "name": "th_R_0",
+      "parent": "thumb_mount_R"
+    },
+    {
+      "name": "th_R_1",
+      "parent": "th_R_0"
+    },
+    {
+      "name": "th_R_2",
+      "parent": "th_R_1"
+    },
+    {
+      "name": "hip_L",
+      "parent": "pelvis"
+    },
+    {
+      "name": "knee_L",
+      "parent": "hip_L"
+    },
+    {
+      "name": "ankle_L",
+      "parent": "knee_L"
+    },
+    {
+      "name": "toe_L",
+      "parent": "ankle_L"
+    },
+    {
+      "name": "hip_R",
+      "parent": "pelvis"
+    },
+    {
+      "name": "knee_R",
+      "parent": "hip_R"
+    },
+    {
+      "name": "ankle_R",
+      "parent": "knee_R"
+    },
+    {
+      "name": "toe_R",
+      "parent": "ankle_R"
+    }
+  ],
+  "grip_points": {
+    "left": "grip_L",
+    "right": "grip_R",
+    "note": "empties parented to the wrist bones; IK targets for grasping"
+  },
+  "animations": [
+    {
+      "name": "Wave_L",
+      "duration_s": 2.5,
+      "frames": 76,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Raise_Hand_L",
+      "duration_s": 2.8,
+      "frames": 85,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Point_Forward_L",
+      "duration_s": 2.4,
+      "frames": 73,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Think_L",
+      "duration_s": 3.0,
+      "frames": 91,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Grasp_L",
+      "duration_s": 1.6,
+      "frames": 49,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Release_L",
+      "duration_s": 1.0,
+      "frames": 31,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Wave_R",
+      "duration_s": 2.5,
+      "frames": 76,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Raise_Hand_R",
+      "duration_s": 2.8,
+      "frames": 85,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Point_Forward_R",
+      "duration_s": 2.4,
+      "frames": 73,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Think_R",
+      "duration_s": 3.0,
+      "frames": 91,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Grasp_R",
+      "duration_s": 1.6,
+      "frames": 49,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Release_R",
+      "duration_s": 1.0,
+      "frames": 31,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Nod_Yes",
+      "duration_s": 1.5,
+      "frames": 46,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Shake_No",
+      "duration_s": 1.5,
+      "frames": 46,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Look_Left",
+      "duration_s": 2.0,
+      "frames": 61,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Look_Right",
+      "duration_s": 2.0,
+      "frames": 61,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Look_Up",
+      "duration_s": 2.0,
+      "frames": 61,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Look_Down",
+      "duration_s": 2.0,
+      "frames": 61,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Bow",
+      "duration_s": 2.4,
+      "frames": 73,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Shrug",
+      "duration_s": 1.6,
+      "frames": 49,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Head_Tilt_Curious",
+      "duration_s": 2.0,
+      "frames": 61,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Celebrate",
+      "duration_s": 2.2,
+      "frames": 67,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Blink",
+      "duration_s": 0.3,
+      "frames": 10,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "keyframed"
+    },
+    {
+      "name": "Look_Around",
+      "duration_s": 6.5,
+      "frames": 196,
+      "loop": false,
+      "additive_in_web": false,
+      "source": "procedural"
+    },
+    {
+      "name": "Idle_Breathing",
+      "duration_s": 4.2,
+      "frames": 127,
+      "loop": true,
+      "additive_in_web": false,
+      "source": "procedural"
+    },
+    {
+      "name": "Walk_In_Place",
+      "duration_s": 2.2,
+      "frames": 67,
+      "loop": true,
+      "additive_in_web": false,
+      "source": "procedural"
+    },
+    {
+      "name": "Talk_Gesture",
+      "duration_s": 6.283185307179586,
+      "frames": 189,
+      "loop": true,
+      "additive_in_web": false,
+      "source": "procedural"
+    }
+  ],
+  "materials": {
+    "ceramic": "Ceramic_White",
+    "titanium": "Titanium",
+    "gunmetal": "Gunmetal",
+    "graphite": "Graphite",
+    "rubber": "Rubber",
+    "glass": "Visor_Glass",
+    "glow": "Emerald_Glow",
+    "amber": "Amber_Glow",
+    "lens": "Sensor_Lens"
+  },
+  "palette": {
+    "graphite": "#25292D",
+    "ceramic_white": "#E9E7E1",
+    "titanium": "#AAB2B7",
+    "emerald": "#2FBF8A",
+    "amber": "#E0A33A"
+  },
+  "parts": 181,
+  "notes": [
+    "Rigid parts parented to bones; no skin weights.",
+    "Euler conventions follow three.js orders per bone: shoulders/hips/ankles XZY, neck/head/eyes/wrists YXZ, others XYZ (web space).",
+    "Grasping in the web simulation is kinematic: objects attach when the grip point is within 3.5 cm."
+  ]
+}
